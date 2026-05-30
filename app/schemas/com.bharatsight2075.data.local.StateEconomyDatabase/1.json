@@ -1,0 +1,85 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "a087e1cc5f3c12719a0cace71d50529a",
+    "entities": [
+      {
+        "tableName": "states_economy",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`stateId` TEXT NOT NULL, `name` TEXT NOT NULL, `gsdp` REAL NOT NULL, `population` INTEGER NOT NULL, `literacyRate` REAL NOT NULL, `hdi` REAL NOT NULL, `unemployment` REAL NOT NULL, `dominantSector` TEXT NOT NULL, `fdiInflow` REAL NOT NULL, `growthRate` REAL NOT NULL, PRIMARY KEY(`stateId`))",
+        "fields": [
+          {
+            "fieldPath": "stateId",
+            "columnName": "stateId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "gsdp",
+            "columnName": "gsdp",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "population",
+            "columnName": "population",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "literacyRate",
+            "columnName": "literacyRate",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hdi",
+            "columnName": "hdi",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "unemployment",
+            "columnName": "unemployment",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dominantSector",
+            "columnName": "dominantSector",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fdiInflow",
+            "columnName": "fdiInflow",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "growthRate",
+            "columnName": "growthRate",
+            "affinity": "REAL",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "stateId"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a087e1cc5f3c12719a0cace71d50529a')"
+    ]
+  }
+}
