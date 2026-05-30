@@ -10,10 +10,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.bharatsight2075.service.LiveEconomyDataService
 import com.bharatsight2075.ui.components.BharatSightBottomNav
 import com.bharatsight2075.ui.forecast.Forecaster2075Screen
@@ -117,7 +119,10 @@ fun AppNavHost(
                     )
                 }
                 composable(Routes.COMPARE) {
-                    CompareScreen(onBack = { navController.popBackStack() })
+                    CompareScreen(
+                        navController = navController,
+                        onBack = { navController.popBackStack() }
+                    )
                 }
                 composable(Routes.UPDATES) {
                     UpdatesScreen(navController = navController)
@@ -132,36 +137,67 @@ fun AppNavHost(
                 // Section Screens
                 composable(Routes.MACRO) {
                     MacroOverviewScreen(
+                        navController = navController,
                         marketData = marketData,
                         onBack = { navController.popBackStack() }
                     )
                 }
                 composable(Routes.SECTOR) {
-                    SectorDeepDiveScreen(onBack = { navController.popBackStack() })
+                    SectorDeepDiveScreen(
+                        navController = navController,
+                        onBack = { navController.popBackStack() }
+                    )
                 }
                 composable(Routes.DEMOGRAPHICS) {
-                    DemographicsScreen(onBack = { navController.popBackStack() })
+                    DemographicsScreen(
+                        navController = navController,
+                        onBack = { navController.popBackStack() }
+                    )
                 }
                 composable(Routes.FORECASTER) {
-                    Forecaster2075Screen(onBack = { navController.popBackStack() })
+                    Forecaster2075Screen(
+                        navController = navController,
+                        onBack = { navController.popBackStack() }
+                    )
                 }
                 composable(Routes.SETTINGS) {
                     SettingsScreen(onBack = { navController.popBackStack() })
                 }
                 composable(Routes.GLOBE) {
-                    India3DGlobeScreen(onBack = { navController.popBackStack() })
+                    India3DGlobeScreen(
+                        navController = navController,
+                        onBack = { navController.popBackStack() }
+                    )
                 }
                 composable(Routes.QUERY) {
                     QueryConsoleScreen(onBack = { navController.popBackStack() })
                 }
                 composable(Routes.OBSERVATORY) {
-                    MacroIndicatorObservatory(onBack = { navController.popBackStack() })
+                    MacroIndicatorObservatory(
+                        navController = navController,
+                        onBack = { navController.popBackStack() }
+                    )
                 }
                 composable(Routes.TRADE) {
-                    TradeNetworkScreen(onBack = { navController.popBackStack() })
+                    TradeNetworkScreen(
+                        navController = navController,
+                        onBack = { navController.popBackStack() }
+                    )
                 }
                 composable(Routes.MARKET) {
-                    SectorStockHeatmapScreen(onBack = { navController.popBackStack() })
+                    SectorStockHeatmapScreen(
+                        navController = navController,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+
+                // DRILL-DOWN DETAIL SYSTEM
+                composable(
+                    route = Routes.CHART_DETAIL,
+                    arguments = listOf(navArgument("chartId") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val chartId = backStackEntry.arguments?.getString("chartId") ?: ""
+                    ChartDetailScreen(navController = navController, chartId = chartId)
                 }
             }
         }

@@ -8,104 +8,84 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.bharatsight2075.ui.theme.GradPalette
 import com.bharatsight2075.ui.theme.SciFiTheme
+import com.bharatsight2075.ui.visualization.ChartMockData
+import com.bharatsight2075.ui.visualization.ChartType
+import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 
 /**
  * C09. RadarPolygonChart
- * N-axis spider, gradient-filled polygon.
+ * FIXED: Angle offset and centering.
  */
 @Composable
 fun RadarPolygonChart(
-    data: List<Float>, // Values normalized 0..1
+    data: List<Float>,
     labels: List<String>,
     modifier: Modifier = Modifier,
-    brush: Brush = GradPalette.ORANGE_PINK,
+    chartHeight: androidx.compose.ui.unit.Dp = 200.dp,
     animated: Boolean = true
 ) {
+    val safeData = data.takeIf { it.isNotEmpty() } 
+        ?: remember { ChartMockData.generateMockData(ChartType.RADAR).filterIsInstance<Float>() }
+    
+    var triggered by remember { mutableStateOf(false) }
     val progress by animateFloatAsState(
-        targetValue = 1f,
+        targetValue = if (triggered) 1f else 0f,
         animationSpec = tween(1200, easing = EaseOutCubic),
         label = "RadarAnim"
     )
+    LaunchedEffect(Unit) { triggered = true }
     
     val currentProgress = if (animated) progress else 1f
-    val extendedColors = SciFiTheme.extendedColors
+    val colors = SciFiTheme.extendedColors
+    val primary = colors.primary
 
-    Canvas(modifier = modifier) {
-        val radius = size.minDimension / 2 * 0.8f
-        val angleStep = (2 * Math.PI / data.size)
-        
-        // Draw Axis
-        for (i in data.indices) {
-            val angle = i * angleStep - Math.PI / 2
-            val lineEnd = Offset(
-                (center.x + radius * cos(angle)).toFloat(),
-                (center.y + radius * sin(angle)).toFloat()
+    Canvas(modifier = modifier.fillMaxWidth().height(chartHeight)) {
+        val radius = size.minDimension / 2 * 0.7f // Leave room for labels
+        val angleStep = 2 * PI / safeData.size
+        val maxVal = safeData.maxOrNull()?.coerceAtLeast(0.001f) ?: 1f
+        val radarCenter = center
+
+        // Draw Axes & Web
+        for (step in 1..4) {
+            val r = radius * (step / 4f)
+            drawCircle(colors.textDisabled.copy(alpha = 0.05f), r, radarCenter, style = Stroke(1.dp.toPx()))
+        }
+
+        safeData.indices.forEach { i ->
+            val angle = -PI / 2 + i * angleStep
+            val end = Offset(
+                radarCenter.x + (radius * cos(angle)).toFloat(),
+                radarCenter.y + (radius * sin(angle)).toFloat()
             )
-            drawLine(
-                color = extendedColors.textDisabled.copy(alpha = 0.3f),
-                start = center,
-                end = lineEnd,
-                strokeWidth = 1.dp.toPx()
+            drawLine(colors.textDisabled.copy(alpha = 0.2f), radarCenter, end, 1.dp.toPx())
+        }
+
+        // Polygon
+        val points = safeData.mapIndexed { i, v ->
+            val angle = -PI / 2 + i * angleStep
+            val r = (v / maxVal) * radius * currentProgress
+            Offset(
+                radarCenter.x + (r * cos(angle)).toFloat(),
+                radarCenter.y + (r * sin(angle)).toFloat()
             )
         }
-        
-        // Draw Web Concentric Circles
-        for (i in 1..4) {
-            val r = radius * (i / 4f)
-            drawCircle(
-                color = extendedColors.textDisabled.copy(alpha = 0.1f),
-                radius = r,
-                center = center,
-                style = Stroke(width = 1.dp.toPx())
-            )
-        }
-        
-        // Draw Polygon Path
-        val polygonPath = Path()
-        data.forEachIndexed { i, value ->
-            val angle = i * angleStep - Math.PI / 2
-            val r = radius * value * currentProgress
-            val x = (center.x + r * cos(angle)).toFloat()
-            val y = (center.y + r * sin(angle)).toFloat()
+
+        if (points.size >= 3) {
+            val path = Path().apply {
+                moveTo(points[0].x, points[0].y)
+                points.forEach { lineTo(it.x, it.y) }
+                close()
+            }
             
-            if (i == 0) polygonPath.moveTo(x, y) else polygonPath.lineTo(x, y)
+            drawPath(path, primary, alpha = 0.3f)
+            drawPath(path, primary, style = Stroke(2.dp.toPx(), join = StrokeJoin.Round))
+            
+            // Glow
+            drawPath(path, primary.copy(alpha = 0.2f), style = Stroke(6.dp.toPx(), join = StrokeJoin.Round))
         }
-        polygonPath.close()
-        
-        // Pass 1: Fill
-        drawPath(path = polygonPath, brush = brush, alpha = 0.4f)
-        
-        // Pass 2: Glow Border
-        drawPath(
-            path = polygonPath,
-            brush = brush,
-            style = Stroke(width = 6.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
-            alpha = 0.2f
-        )
-        
-        // Pass 3: Sharp Border
-        drawPath(
-            path = polygonPath,
-            brush = brush,
-            style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
-        )
-    }
-}
-
-@Preview
-@Composable
-fun PreviewRadarPolygonChart() {
-    SciFiTheme.ProvideSciFiTheme(SciFiTheme.Theme.Cyberpunk) {
-        RadarPolygonChart(
-            data = listOf(0.8f, 0.6f, 0.9f, 0.4f, 0.7f),
-            labels = listOf("GDP", "HDI", "INF", "EMP", "TRD"),
-            modifier = Modifier.size(300.dp)
-        )
     }
 }

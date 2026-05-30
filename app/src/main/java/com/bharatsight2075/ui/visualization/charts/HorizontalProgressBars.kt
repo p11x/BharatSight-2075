@@ -7,37 +7,37 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.*
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.bharatsight2075.ui.theme.GradPalette
 import com.bharatsight2075.ui.theme.SciFiTheme
 
 /**
  * C06. HorizontalProgressBars
- * Stacked horizontal bars, gradient fill, label+value on row.
  */
 @Composable
 fun HorizontalProgressBars(
-    items: List<Pair<String, Float>>, // Label to Progress (0..1)
+    items: List<Pair<String, Float>>,
     modifier: Modifier = Modifier,
-    brush: Brush = GradPalette.TEAL_PURPLE,
+    chartHeight: androidx.compose.ui.unit.Dp = 120.dp,
     animated: Boolean = true
 ) {
+    val safeItems = items.takeIf { it.isNotEmpty() } ?: listOf("METRIC A" to 0.7f, "METRIC B" to 0.4f, "METRIC C" to 0.9f)
+    
+    var triggered by remember { mutableStateOf(false) }
     val progress by animateFloatAsState(
-        targetValue = 1f,
+        targetValue = if (triggered) 1f else 0f,
         animationSpec = tween(1200, easing = EaseOutCubic),
         label = "HProgressAnim"
     )
+    LaunchedEffect(Unit) { triggered = true }
     
     val currentProgress = if (animated) progress else 1f
     val colors = SciFiTheme.extendedColors
 
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        items.forEach { (label, value) ->
+    Column(modifier = modifier.fillMaxWidth().height(chartHeight), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        safeItems.forEach { (label, value) ->
             Column {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -54,40 +54,17 @@ fun HorizontalProgressBars(
                     drawRoundRect(
                         color = colors.textDisabled.copy(alpha = 0.2f),
                         size = size,
-                        cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx())
-                    )
-                    
-                    // Progress Glow
-                    drawRoundRect(
-                        brush = brush,
-                        size = Size(barWidth, size.height),
-                        cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx()),
-                        alpha = 0.3f
+                        cornerRadius = CornerRadius(4.dp.toPx())
                     )
                     
                     // Progress
                     drawRoundRect(
-                        brush = brush,
+                        brush = Brush.horizontalGradient(listOf(colors.primary, colors.accent)),
                         size = Size(barWidth, size.height),
-                        cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx())
+                        cornerRadius = CornerRadius(4.dp.toPx())
                     )
                 }
             }
         }
-    }
-}
-
-@Preview
-@Composable
-fun PreviewHorizontalProgressBars() {
-    SciFiTheme.ProvideSciFiTheme(SciFiTheme.Theme.Cyberpunk) {
-        HorizontalProgressBars(
-            items = listOf(
-                "GDP GROWTH" to 0.81f,
-                "TECH ADOPTION" to 0.92f,
-                "URBANIZATION" to 0.65f
-            ),
-            modifier = Modifier.fillMaxWidth().padding(16.dp)
-        )
     }
 }

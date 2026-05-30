@@ -8,6 +8,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.bharatsight2075.ui.components.*
 import com.bharatsight2075.ui.theme.GradPalette
 import com.bharatsight2075.ui.theme.SciFiTheme
@@ -15,10 +17,9 @@ import com.bharatsight2075.ui.visualization.charts.*
 
 @Composable
 fun MacroIndicatorObservatory(
+    navController: NavController,
     onBack: () -> Unit
 ) {
-    val extendedColors = SciFiTheme.extendedColors
-    
     Scaffold(
         topBar = {
             BharatSightTopBar(
@@ -39,156 +40,151 @@ fun MacroIndicatorObservatory(
             contentPadding = PaddingValues(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // 1. CPI Trend
             item {
-                key("cpi_trend") {
-                    DashCard(title = "CPI INFLATION TREND (24M)") {
-                        GradientAreaChart(
-                            data = listOf(4.2f, 4.8f, 5.1f, 4.9f, 4.5f, 4.2f, 4.1f, 4.3f, 4.5f, 4.7f, 4.2f, 4.0f),
-                            modifier = Modifier.height(200.dp),
-                            brush = GradPalette.ORANGE_PINK,
-                            strokeColor = Color(0xFFFF6B35)
-                        )
+                DashCard(
+                    chartId = "observatory_cpi",
+                    navController = navController,
+                    title = "CPI INFLATION TREND (24M)"
+                ) {
+                    GradientAreaChart(
+                        data = emptyList(),
+                        modifier = Modifier.height(200.dp),
+                        strokeColor = Color(0xFFFF6B35)
+                    )
+                }
+            }
+
+            item {
+                DashCard(
+                    chartId = "observatory_wpi_cpi",
+                    navController = navController,
+                    title = "CPI vs WPI DIVERGENCE"
+                ) {
+                    MultiLineChart(
+                        data = emptyList(),
+                        colors = listOf(Color(0xFFFF6B35), Color(0xFF00F5FF)),
+                        modifier = Modifier.height(200.dp)
+                    )
+                }
+            }
+
+            item {
+                DashCard(
+                    chartId = "observatory_iip",
+                    navController = navController,
+                    title = "IIP SECTORAL GROWTH"
+                ) {
+                    GradientBarChart(
+                        data = emptyList(),
+                        labels = listOf("MFG", "MIN", "ELE", "CON", "GEN"),
+                        modifier = Modifier.height(180.dp)
+                    )
+                }
+            }
+
+            item {
+                TwoColumnRow {
+                    DashCard(
+                        chartId = "observatory_pmi",
+                        navController = navController,
+                        title = "PMI GAUGE", 
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        SpeedometerGauge(value = 56.4f, max = 70f, label = "COMPOSITE", modifier = Modifier.height(180.dp))
+                    }
+                    DashCard(
+                        chartId = "observatory_deficit",
+                        navController = navController,
+                        title = "FISCAL DEFICIT", 
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        HalfDonutGauge(value = 5.1f, max = 10f, label = "% OF GDP", modifier = Modifier.height(180.dp))
                     }
                 }
             }
 
-            // 2. WPI vs CPI
             item {
-                key("wpi_vs_cpi") {
-                    DashCard(title = "CPI vs WPI DIVERGENCE") {
-                        MultiLineChart(
-                            data = listOf(
-                                listOf(4.2f, 4.5f, 4.3f, 4.1f, 4.0f, 4.2f),
-                                listOf(2.1f, 2.5f, 2.8f, 2.3f, 1.9f, 2.1f)
-                            ),
-                            colors = listOf(Color(0xFFFF6B35), Color(0xFF00F5FF)),
-                            modifier = Modifier.height(200.dp)
-                        )
-                    }
+                DashCard(
+                    chartId = "observatory_reserves",
+                    navController = navController,
+                    title = "FOREIGN EXCHANGE RESERVES"
+                ) {
+                    GlowingNumberTicker(
+                        value = 620.0f,
+                        unit = "USD BILLION",
+                        delta = "▲ 2.1% MoM"
+                    )
                 }
             }
 
-            // 3. IIP Growth
             item {
-                key("iip_growth") {
-                    DashCard(title = "IIP SECTORAL GROWTH") {
-                        GradientBarChart(
-                            data = listOf(5.8f, 7.2f, 4.1f, 6.5f, 8.1f),
-                            labels = listOf("MFG", "MIN", "ELE", "CON", "GEN"),
-                            modifier = Modifier.height(180.dp),
-                            brush = GradPalette.GREEN_TEAL
-                        )
-                    }
+                DashCard(
+                    chartId = "observatory_yield",
+                    navController = navController,
+                    title = "G-SEC YIELD CURVE"
+                ) {
+                    MultiLineChart(
+                        data = emptyList(),
+                        colors = listOf(Color(0xFF7C4DFF)),
+                        modifier = Modifier.height(180.dp)
+                    )
                 }
             }
 
-            // 4. PMI Gauge & Fiscal Deficit
             item {
-                key("pmi_fiscal") {
-                    TwoColumnRow {
-                        DashCard(title = "PMI GAUGE", modifier = Modifier.weight(1f)) {
-                            SpeedometerGauge(value = 56.4f, max = 70f, label = "COMPOSITE", modifier = Modifier.height(180.dp))
-                        }
-                        DashCard(title = "FISCAL DEFICIT", modifier = Modifier.weight(1f)) {
-                            HalfDonutGauge(value = 5.1f, max = 10f, label = "% OF GDP", modifier = Modifier.height(180.dp))
-                        }
-                    }
+                DashCard(
+                    chartId = "observatory_anomalies",
+                    navController = navController,
+                    title = "INDICATOR ANOMALY MATRIX"
+                ) {
+                    HeatmapGridChart(
+                        data = emptyList(),
+                        modifier = Modifier.height(280.dp)
+                    )
                 }
             }
 
-            // 5. FX Reserves Ticker
             item {
-                key("fx_reserves") {
-                    DashCard(title = "FOREIGN EXCHANGE RESERVES") {
-                        GlowingNumberTicker(
-                            value = 620.0f,
-                            unit = "USD BILLION",
-                            delta = "▲ 2.1% MoM",
-                            brush = GradPalette.GOLD_WHITE
-                        )
-                    }
+                DashCard(
+                    chartId = "observatory_liquidity",
+                    navController = navController,
+                    title = "DAILY INTERBANK LIQUIDITY"
+                ) {
+                    WaveformChart(
+                        modifier = Modifier.height(150.dp)
+                    )
                 }
             }
 
-            // 6. Bond Yield Curve
             item {
-                key("yield_curve") {
-                    DashCard(title = "G-SEC YIELD CURVE") {
-                        MultiLineChart(
-                            data = listOf(
-                                listOf(6.8f, 7.0f, 7.15f, 7.25f, 7.32f, 7.40f)
-                            ),
-                            colors = listOf(Color(0xFF7C4DFF)),
-                            modifier = Modifier.height(180.dp)
-                        )
-                    }
+                DashCard(
+                    chartId = "observatory_fdi",
+                    navController = navController,
+                    title = "FDI BY SOURCE SECTOR"
+                ) {
+                    PolarAreaChart(
+                        data = emptyList(),
+                        brushes = emptyList(),
+                        modifier = Modifier.height(250.dp)
+                    )
                 }
             }
 
-            // 7. Anomaly Heatmap
             item {
-                key("anomaly_heatmap") {
-                    DashCard(title = "INDICATOR ANOMALY MATRIX") {
-                        HeatmapGridChart(
-                            data = List(12) { List(12) { (0..100).random() / 100f } },
-                            modifier = Modifier.height(280.dp)
-                        )
-                    }
-                }
-            }
-
-            // 8. Liquidity Wave
-            item {
-                key("liquidity_wave") {
-                    DashCard(title = "DAILY INTERBANK LIQUIDITY") {
-                        WaveformChart(
-                            modifier = Modifier.height(150.dp),
-                            brush = GradPalette.CYAN_WHITE
-                        )
-                    }
-                }
-            }
-
-            // 9. FDI Inflow Polar
-            item {
-                key("fdi_polar") {
-                    DashCard(title = "FDI BY SOURCE SECTOR") {
-                        PolarAreaChart(
-                            data = listOf(85f, 65f, 45f, 30f, 25f),
-                            brushes = listOf(GradPalette.TEAL_PURPLE, GradPalette.ORANGE_PINK, GradPalette.GREEN_TEAL, GradPalette.YELLOW_ORANGE, GradPalette.PURPLE_BLUE),
-                            modifier = Modifier.height(250.dp)
-                        )
-                    }
-                }
-            }
-
-            // 10. Alert Rings
-            item {
-                key("alert_rings") {
-                    DashCard(title = "SYSTEM ALERTS MONITOR") {
-                        RingProgressCluster(
-                            rings = listOf(
-                                RingData(0.2f, "HIGH", GradPalette.ORANGE_PINK),
-                                RingData(0.4f, "MED", GradPalette.YELLOW_ORANGE),
-                                RingData(0.8f, "LOW", GradPalette.GREEN_TEAL)
-                            ),
-                            centerStat = "03",
-                            modifier = Modifier.height(200.dp)
-                        )
-                    }
+                DashCard(
+                    chartId = "observatory_alerts",
+                    navController = navController,
+                    title = "SYSTEM ALERTS MONITOR"
+                ) {
+                    RingProgressCluster(
+                        rings = emptyList(),
+                        centerStat = "03",
+                        modifier = Modifier.height(200.dp)
+                    )
                 }
             }
 
             item { Spacer(modifier = Modifier.height(100.dp)) }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewMacroIndicatorObservatory() {
-    SciFiTheme.ProvideSciFiTheme(SciFiTheme.Theme.Cyberpunk) {
-        MacroIndicatorObservatory(onBack = {})
     }
 }

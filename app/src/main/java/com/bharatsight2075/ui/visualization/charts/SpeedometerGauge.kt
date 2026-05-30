@@ -11,17 +11,14 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.bharatsight2075.ui.theme.GradPalette
 import com.bharatsight2075.ui.theme.SciFiTheme
 import kotlin.math.cos
 import kotlin.math.sin
 
 /**
  * C20. SpeedometerGauge
- * Full circle with arc segments, center reading.
  */
 @Composable
 fun SpeedometerGauge(
@@ -29,25 +26,27 @@ fun SpeedometerGauge(
     max: Float,
     label: String,
     modifier: Modifier = Modifier,
+    chartHeight: androidx.compose.ui.unit.Dp = 200.dp,
     animated: Boolean = true
 ) {
+    var triggered by remember { mutableStateOf(false) }
     val progress by animateFloatAsState(
-        targetValue = (value / max).coerceIn(0f, 1f),
+        targetValue = if (triggered) (value / max).coerceIn(0f, 1f) else 0f,
         animationSpec = tween(1200, easing = EaseOutCubic),
         label = "SpeedoAnim"
     )
+    LaunchedEffect(Unit) { triggered = true }
     
     val currentProgress = if (animated) progress else (value / max)
     val colors = SciFiTheme.extendedColors
 
-    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+    Box(modifier = modifier.fillMaxWidth().height(chartHeight), contentAlignment = Alignment.Center) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             val strokeWidth = 12.dp.toPx()
-            val diameter = size.minDimension - strokeWidth
+            val diameter = size.minDimension - 40.dp.toPx()
             val arcSize = Size(diameter, diameter)
             val topLeft = Offset((size.width - diameter) / 2, (size.height - diameter) / 2)
             
-            // Zones: Green (0-60%), Yellow (60-85%), Red (85-100%)
             val startAngle = 135f
             val totalSweep = 270f
             
@@ -100,19 +99,8 @@ fun SpeedometerGauge(
                 center.y + needleLen * sin(angleRad).toFloat()
             )
             
-            drawLine(
-                color = Color.White,
-                start = center,
-                end = needleEnd,
-                strokeWidth = 3.dp.toPx(),
-                cap = StrokeCap.Round
-            )
-            
-            drawCircle(
-                color = Color.White,
-                radius = 6.dp.toPx(),
-                center = center
-            )
+            drawLine(Color.White, center, needleEnd, 3.dp.toPx(), cap = StrokeCap.Round)
+            drawCircle(Color.White, 6.dp.toPx(), center)
         }
         
         Column(
@@ -130,18 +118,5 @@ fun SpeedometerGauge(
                 color = colors.textSecondary
             )
         }
-    }
-}
-
-@Preview
-@Composable
-fun PreviewSpeedometerGauge() {
-    SciFiTheme.ProvideSciFiTheme(SciFiTheme.Theme.Cyberpunk) {
-        SpeedometerGauge(
-            value = 54.2f,
-            max = 70f,
-            label = "PMI INDEX",
-            modifier = Modifier.size(250.dp)
-        )
     }
 }

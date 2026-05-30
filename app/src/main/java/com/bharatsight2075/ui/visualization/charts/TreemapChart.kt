@@ -8,77 +8,75 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.*
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.bharatsight2075.ui.theme.GradPalette
 import com.bharatsight2075.ui.theme.SciFiTheme
+import com.bharatsight2075.ui.visualization.ChartMockData
+import com.bharatsight2075.ui.visualization.ChartType
 import com.bharatsight2075.ui.visualization.treemap.TreemapLayoutEngine
 
 /**
  * C16. TreemapChart
- * Squarified rectangles, per-cell gradient.
  */
 @Composable
 fun TreemapChart(
     weights: List<Double>,
     brushes: List<Brush>,
     modifier: Modifier = Modifier,
+    chartHeight: androidx.compose.ui.unit.Dp = 220.dp,
     animated: Boolean = true
 ) {
+    val safeWeights = weights.takeIf { it.isNotEmpty() } 
+        ?: remember { ChartMockData.generateMockData(ChartType.TREEMAP) as List<Double> }
+    
+    var triggered by remember { mutableStateOf(false) }
     val progress by animateFloatAsState(
-        targetValue = 1f,
+        targetValue = if (triggered) 1f else 0f,
         animationSpec = tween(1200, easing = EaseOutCubic),
         label = "TreemapAnim"
     )
+    LaunchedEffect(Unit) { triggered = true }
     
     val currentProgress = if (animated) progress else 1f
+    val colors = SciFiTheme.extendedColors
 
     Canvas(
-        modifier = modifier.drawWithCache {
-            onDrawBehind {
-                val rects = TreemapLayoutEngine.squarify(weights, Rect(0f, 0f, size.width, size.height))
-                
-                rects.forEach { treemapRect ->
-                    val brush = brushes.getOrElse(treemapRect.originalIndex % brushes.size) { GradPalette.TEAL_PURPLE }
-                    val rect = treemapRect.rect
+        modifier = modifier
+            .fillMaxWidth()
+            .height(chartHeight)
+            .drawWithCache {
+                onDrawBehind {
+                    val rects = TreemapLayoutEngine.squarify(safeWeights, Rect(0f, 0f, size.width, size.height))
                     
-                    // Animate scaling from center
-                    val animatedRect = Rect(
-                        left = rect.left + (rect.width * (1 - currentProgress) / 2),
-                        top = rect.top + (rect.height * (1 - currentProgress) / 2),
-                        right = rect.right - (rect.width * (1 - currentProgress) / 2),
-                        bottom = rect.bottom - (rect.height * (1 - currentProgress) / 2)
-                    )
-                    
-                    drawRect(
-                        brush = brush,
-                        topLeft = Offset(animatedRect.left + 1.dp.toPx(), animatedRect.top + 1.dp.toPx()),
-                        size = androidx.compose.ui.geometry.Size(animatedRect.width - 2.dp.toPx(), animatedRect.height - 2.dp.toPx()),
-                        alpha = 0.8f * currentProgress
-                    )
-                    
-                    // Border
-                    drawRect(
-                        color = Color.Black,
-                        topLeft = Offset(animatedRect.left, animatedRect.top),
-                        size = androidx.compose.ui.geometry.Size(animatedRect.width, animatedRect.height),
-                        style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.dp.toPx())
-                    )
+                    rects.forEach { treemapRect ->
+                        val rect = treemapRect.rect
+                        val color = when(treemapRect.originalIndex % 3) {
+                            0 -> colors.primary
+                            1 -> colors.accent
+                            else -> Color(0xFF39FF14)
+                        }
+                        
+                        // Scale from center for animation
+                        val center = rect.center
+                        val animatedW = rect.width * currentProgress
+                        val animatedH = rect.height * currentProgress
+                        val animatedRect = Rect(center.x - animatedW/2, center.y - animatedH/2, center.x + animatedW/2, center.y + animatedH/2)
+
+                        drawRect(
+                            color = color.copy(alpha = 0.8f),
+                            topLeft = animatedRect.topLeft,
+                            size = animatedRect.size
+                        )
+                        
+                        drawRect(
+                            color = Color.Black,
+                            topLeft = animatedRect.topLeft,
+                            size = animatedRect.size,
+                            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.dp.toPx())
+                        )
+                    }
                 }
             }
-        }
     ) {}
-}
-
-@Preview
-@Composable
-fun PreviewTreemapChart() {
-    SciFiTheme.ProvideSciFiTheme(SciFiTheme.Theme.Cyberpunk) {
-        TreemapChart(
-            weights = listOf(100.0, 80.0, 60.0, 40.0, 20.0, 20.0, 10.0),
-            brushes = listOf(GradPalette.TEAL_PURPLE, GradPalette.ORANGE_PINK, GradPalette.GREEN_TEAL, GradPalette.YELLOW_ORANGE),
-            modifier = Modifier.fillMaxWidth().height(300.dp)
-        )
-    }
 }

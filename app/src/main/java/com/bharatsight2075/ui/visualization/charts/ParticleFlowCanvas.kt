@@ -2,16 +2,12 @@ package com.bharatsight2075.ui.visualization.charts
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.bharatsight2075.ui.theme.GradPalette
 import com.bharatsight2075.ui.theme.SciFiTheme
 import kotlin.random.Random
 
@@ -21,96 +17,53 @@ data class Particle(
     val control: Offset,
     val startTime: Long,
     val duration: Long,
-    val color: Color,
-    val size: Float
+    val color: Color
 )
 
 /**
  * C21. ParticleFlowCanvas
- * Animated particles moving along bezier paths.
  */
 @Composable
 fun ParticleFlowCanvas(
-    dataSize: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    chartHeight: androidx.compose.ui.unit.Dp = 240.dp,
+    particleCount: Int = 40
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "ParticleAnim")
+    val infiniteTransition = rememberInfiniteTransition(label = "Particles")
     val time by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ), label = "Time"
+        animationSpec = infiniteRepeatable(tween(2000, easing = LinearEasing)),
+        label = "Time"
     )
 
-    val colors = listOf(Color(0xFF00F5FF), Color(0xFFFF6B35), Color(0xFF39FF14), Color(0xFFFFD600))
-    val particleCount = minOf(dataSize * 4, 80)
+    val colors = listOf(SciFiTheme.extendedColors.primary, SciFiTheme.extendedColors.accent, Color(0xFF39FF14))
     
-    val particles = remember(dataSize) {
+    val particles = remember(particleCount) {
         List(particleCount) {
-            val startX = Random.nextFloat() * 1000f
-            val startY = Random.nextFloat() * 1000f
-            val endX = if (Random.nextBoolean()) 0f else 1000f
-            val endY = Random.nextFloat() * 1000f
-            
+            val start = Offset(0f, Random.nextFloat())
+            val end = Offset(1000f, Random.nextFloat())
             Particle(
-                start = Offset(startX, startY),
-                end = Offset(endX, endY),
-                control = Offset(500f, 500f), // Gravity towards center
+                start = start,
+                end = end,
+                control = Offset(500f, Random.nextFloat() * 1000f),
                 startTime = Random.nextLong(2000),
-                duration = 1500 + Random.nextLong(1500),
-                color = colors.random(),
-                size = 2f + Random.nextFloat() * 6f
+                duration = 1500 + Random.nextLong(1000),
+                color = colors.random()
             )
         }
     }
 
-    Canvas(
-        modifier = modifier.fillMaxSize().drawWithCache {
-            onDrawBehind {
-                val canvasWidth = size.width
-                val canvasHeight = size.height
-                
-                particles.forEach { p ->
-                    val t = ((time * 3000 + p.startTime) % p.duration) / p.duration.toFloat()
-                    
-                    // Bezier Quadratic formula: (1-t)^2*P0 + 2*(1-t)*t*P1 + t^2*P2
-                    val x = (1-t)*(1-t)*(p.start.x / 1000f * canvasWidth) + 
-                            2*(1-t)*t*(p.control.x / 1000f * canvasWidth) + 
-                            t*t*(p.end.x / 1000f * canvasWidth)
-                            
-                    val y = (1-t)*(1-t)*(p.start.y / 1000f * canvasHeight) + 
-                            2*(1-t)*t*(p.control.y / 1000f * canvasHeight) + 
-                            t*t*(p.end.y / 1000f * canvasHeight)
-                    
-                    drawCircle(
-                        color = p.color,
-                        radius = p.size.dp.toPx() * (1 - t), // Shrink as they near end
-                        center = Offset(x, y),
-                        alpha = (1 - t) * 0.8f
-                    )
-                    
-                    // Tail
-                    drawCircle(
-                        color = p.color,
-                        radius = (p.size * 0.5f).dp.toPx(),
-                        center = Offset(x, y),
-                        alpha = 0.2f
-                    )
-                }
-            }
+    Canvas(modifier = modifier.fillMaxWidth().height(chartHeight)) {
+        particles.forEach { p ->
+            val t = ((time * 2000 + p.startTime) % p.duration) / p.duration.toFloat()
+            
+            // Bezier
+            val x = (1-t)*(1-t)*(p.start.x / 1000f * size.width) + 2*(1-t)*t*(p.control.x / 1000f * size.width) + t*t*(p.end.x / 1000f * size.width)
+            val y = (1-t)*(1-t)*(p.start.y * size.height) + 2*(1-t)*t*(p.control.y * size.height) + t*t*(p.end.y * size.height)
+            
+            drawCircle(p.color, 3.dp.toPx() * (1-t), Offset(x, y), alpha = (1-t) * 0.8f)
+            drawCircle(p.color.copy(alpha = 0.2f), 8.dp.toPx() * (1-t), Offset(x, y))
         }
-    ) {}
-}
-
-@Preview
-@Composable
-fun PreviewParticleFlowCanvas() {
-    SciFiTheme.ProvideSciFiTheme(SciFiTheme.Theme.Cyberpunk) {
-        ParticleFlowCanvas(
-            dataSize = 15,
-            modifier = Modifier.size(300.dp).background(Color.Black)
-        )
     }
 }

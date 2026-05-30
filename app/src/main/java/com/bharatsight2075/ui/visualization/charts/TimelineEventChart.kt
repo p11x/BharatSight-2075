@@ -5,95 +5,97 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.bharatsight2075.ui.theme.GradPalette
 import com.bharatsight2075.ui.theme.SciFiTheme
 
-data class TimelineEvent(val year: Int, val title: String, val isTop: Boolean = true)
+data class TimelineEvent(val year: String, val label: String)
 
 /**
  * C23. TimelineEventChart
- * Horizontal timeline with event markers.
  */
 @Composable
 fun TimelineEventChart(
     events: List<TimelineEvent>,
     modifier: Modifier = Modifier,
+    chartHeight: androidx.compose.ui.unit.Dp = 140.dp,
     animated: Boolean = true
 ) {
+    val safeEvents = events.takeIf { it.isNotEmpty() } ?: listOf(
+        TimelineEvent("2030", "Solar Grid"),
+        TimelineEvent("2045", "Hyperloop"),
+        TimelineEvent("2060", "AI Gov"),
+        TimelineEvent("2075", "GDP $37T")
+    )
+
+    var triggered by remember { mutableStateOf(false) }
     val progress by animateFloatAsState(
-        targetValue = 1f,
+        targetValue = if (triggered) 1f else 0f,
         animationSpec = tween(1200, easing = EaseOutCubic),
         label = "TimelineAnim"
     )
+    LaunchedEffect(Unit) { triggered = true }
     
     val currentProgress = if (animated) progress else 1f
-    val colors = SciFiTheme.extendedColors
+    val primary = SciFiTheme.extendedColors.primary
+    val density = LocalDensity.current
 
-    Box(modifier = modifier) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val width = size.width
-            val centerY = size.height / 2
+    BoxWithConstraints(modifier = modifier.fillMaxWidth().height(chartHeight)) {
+        val wPx = with(density) { maxWidth.toPx() }
+        val lineYPx = with(density) { (maxHeight / 2).toPx() }
+        
+        Canvas(Modifier.fillMaxSize()) {
+            // Main Line
+            drawLine(primary.copy(0.4f), Offset(0f, lineYPx), Offset(wPx * currentProgress, lineYPx), 2.dp.toPx())
             
-            // Timeline main line
-            drawLine(
-                color = colors.primary.copy(alpha = 0.4f),
-                start = Offset(0f, centerY),
-                end = Offset(width * currentProgress, centerY),
-                strokeWidth = 2.dp.toPx()
-            )
-            
-            val minYear = events.minOf { it.year }
-            val maxYear = events.maxOf { it.year }
-            val yearRange = (maxYear - minYear).coerceAtLeast(1)
-            
-            events.forEach { event ->
-                val x = ((event.year - minYear).toFloat() / yearRange) * width * currentProgress
+            safeEvents.forEachIndexed { i, _ ->
+                val x = (i.toFloat() / (safeEvents.size - 1).coerceAtLeast(1)) * wPx * currentProgress
+                // Dot
+                drawCircle(primary.copy(0.2f), 14.dp.toPx(), Offset(x, lineYPx))
+                drawCircle(primary, 6.dp.toPx(), Offset(x, lineYPx))
                 
-                // Event Marker
-                drawCircle(
-                    color = colors.primary,
-                    radius = 5.dp.toPx(),
-                    center = Offset(x, centerY)
-                )
-                
-                drawCircle(
-                    color = colors.primary.copy(alpha = 0.3f),
-                    radius = 10.dp.toPx(),
-                    center = Offset(x, centerY)
-                )
-                
-                // Connecting line to label
-                val lineEnd = if (event.isTop) centerY - 40.dp.toPx() else centerY + 40.dp.toPx()
-                drawLine(
-                    color = colors.accent.copy(alpha = 0.5f),
-                    start = Offset(x, centerY),
-                    end = Offset(x, lineEnd),
-                    strokeWidth = 1.dp.toPx()
-                )
+                // Tick line
+                val dir = if (i % 2 == 0) -1 else 1
+                drawLine(primary.copy(0.6f), Offset(x, lineYPx), Offset(x, lineYPx + dir * 40.dp.toPx()), 1.dp.toPx())
             }
         }
-    }
-}
-
-@Preview
-@Composable
-fun PreviewTimelineEventChart() {
-    SciFiTheme.ProvideSciFiTheme(SciFiTheme.Theme.Cyberpunk) {
-        TimelineEventChart(
-            events = listOf(
-                TimelineEvent(2030, "SOLAR GRID", true),
-                TimelineEvent(2045, "HYPERLOOP", false),
-                TimelineEvent(2060, "AI GOV", true),
-                TimelineEvent(2075, "GDP $37T", false)
-            ),
-            modifier = Modifier.fillMaxWidth().height(200.dp)
-        )
+        
+        safeEvents.forEachIndexed { i, event ->
+            val xFraction = i.toFloat() / (safeEvents.size - 1).coerceAtLeast(1)
+            val xDp = (xFraction * maxWidth.value).dp
+            val topOffset = if (i % 2 == 0) 4.dp else (maxHeight / 2 + 44.dp)
+            
+            Box(
+                Modifier
+                    .offset(x = xDp * currentProgress - 36.dp, y = topOffset)
+                    .width(72.dp)
+                    .graphicsLayer { alpha = currentProgress },
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = event.year,
+                        fontSize = 9.sp,
+                        fontFamily = FontFamily.Monospace,
+                        color = primary,
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        text = event.label,
+                        fontSize = 8.sp,
+                        color = Color.White.copy(alpha = 0.7f),
+                        textAlign = TextAlign.Center,
+                        maxLines = 2
+                    )
+                }
+            }
+        }
     }
 }

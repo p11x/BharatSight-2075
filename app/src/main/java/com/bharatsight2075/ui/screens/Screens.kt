@@ -33,6 +33,7 @@ object Routes {
     const val TRADE = "trade"
     const val MARKET = "market"
     const val STATES = "states"
+    const val CHART_DETAIL = "chart_detail/{chartId}"
 }
 
 @Composable

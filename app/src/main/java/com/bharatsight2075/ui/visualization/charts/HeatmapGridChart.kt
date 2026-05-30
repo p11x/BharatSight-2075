@@ -5,74 +5,71 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.*
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.bharatsight2075.ui.theme.GradPalette
 import com.bharatsight2075.ui.theme.SciFiTheme
+import com.bharatsight2075.ui.visualization.ChartMockData
+import com.bharatsight2075.ui.visualization.ChartType
 
 /**
  * C15. HeatmapGridChart
- * N×M grid cells, color intensity = value.
  */
 @Composable
 fun HeatmapGridChart(
-    data: List<List<Float>>, // Normalized 0..1 values
+    data: List<List<Float>>,
     modifier: Modifier = Modifier,
-    brush: Brush = GradPalette.YELLOW_ORANGE,
+    chartHeight: androidx.compose.ui.unit.Dp = 200.dp,
     animated: Boolean = true
 ) {
+    val matrix = data.takeIf { it.isNotEmpty() } 
+        ?: remember { ChartMockData.generateMockData(ChartType.HEATMAP) as List<List<Float>> }
+    
+    var triggered by remember { mutableStateOf(false) }
     val progress by animateFloatAsState(
-        targetValue = 1f,
+        targetValue = if (triggered) 1f else 0f,
         animationSpec = tween(1200, easing = EaseOutCubic),
         label = "HeatmapAnim"
     )
+    LaunchedEffect(Unit) { triggered = true }
     
     val currentProgress = if (animated) progress else 1f
+    val colors = SciFiTheme.extendedColors
+    val coldColor = colors.primary.copy(alpha = 0.1f)
+    val hotColor = colors.accent
 
-    Canvas(modifier = modifier) {
-        val rows = data.size
-        val cols = data.firstOrNull()?.size ?: 0
-        if (cols == 0) return@Canvas
+    Canvas(modifier = modifier.fillMaxWidth().height(chartHeight)) {
+        val rows = matrix.size.coerceAtLeast(1)
+        val cols = matrix[0].size.coerceAtLeast(1)
+        val cellW = size.width / cols
+        val cellH = size.height / rows
         
-        val cellWidth = size.width / cols
-        val cellHeight = size.height / rows
-        
-        data.forEachIndexed { r, row ->
+        val maxVal = matrix.flatten().maxOrNull()?.coerceAtLeast(0.001f) ?: 1f
+        val minVal = matrix.flatten().minOrNull() ?: 0f
+
+        matrix.forEachIndexed { r, row ->
             row.forEachIndexed { c, value ->
-                val x = c * cellWidth
-                val y = r * cellHeight
+                val normalized = ((value - minVal) / (maxVal - minVal).coerceAtLeast(0.001f)) * currentProgress
+                val cellColor = lerp(coldColor, hotColor, normalized)
                 
-                // Draw Cell with alpha intensity
-                drawRect(
-                    brush = brush,
-                    topLeft = Offset(x + 1.dp.toPx(), y + 1.dp.toPx()),
-                    size = Size(cellWidth - 2.dp.toPx(), cellHeight - 2.dp.toPx()),
-                    alpha = value * currentProgress
-                )
-                
-                // Add a very subtle inner border
-                drawRect(
-                    color = Color.White.copy(alpha = 0.05f),
-                    topLeft = Offset(x, y),
-                    size = Size(cellWidth, cellHeight),
-                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = 0.5.dp.toPx())
+                drawRoundRect(
+                    color = cellColor,
+                    topLeft = Offset(c * cellW + 1.dp.toPx(), r * cellH + 1.dp.toPx()),
+                    size = Size(cellW - 2.dp.toPx(), cellH - 2.dp.toPx()),
+                    cornerRadius = CornerRadius(4.dp.toPx())
                 )
             }
         }
     }
 }
 
-@Preview
-@Composable
-fun PreviewHeatmapGridChart() {
-    val mockData = List(10) { List(10) { (0..100).random() / 100f } }
-    SciFiTheme.ProvideSciFiTheme(SciFiTheme.Theme.Cyberpunk) {
-        HeatmapGridChart(
-            data = mockData,
-            modifier = Modifier.size(300.dp)
-        )
-    }
+private fun lerp(start: Color, stop: Color, fraction: Float): Color {
+    return Color(
+        red = androidx.compose.ui.util.lerp(start.red, stop.red, fraction),
+        green = androidx.compose.ui.util.lerp(start.green, stop.green, fraction),
+        blue = androidx.compose.ui.util.lerp(start.blue, stop.blue, fraction),
+        alpha = androidx.compose.ui.util.lerp(start.alpha, stop.alpha, fraction)
+    )
 }

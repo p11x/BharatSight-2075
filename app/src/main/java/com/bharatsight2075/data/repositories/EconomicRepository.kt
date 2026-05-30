@@ -40,6 +40,10 @@ class EconomicRepository @Inject constructor(
         dao.clearPredictedData()
     }
 
+    suspend fun getDataForChart(chartId: String): List<Any> {
+        return emptyList() // Fallback to mock
+    }
+
     /**
      * Offline-first synchronization: Fetch from API and update local Room database
      * Returns Result indicating success or failure

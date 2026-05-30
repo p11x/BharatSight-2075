@@ -11,17 +11,15 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.bharatsight2075.ui.theme.GradPalette
 import com.bharatsight2075.ui.theme.SciFiTheme
+import com.bharatsight2075.ui.visualization.GradientFills
 import kotlin.math.cos
 import kotlin.math.sin
 
 /**
  * C04. HalfDonutGauge
- * 180° semicircle gauge, gradient track, needle indicator.
  */
 @Composable
 fun HalfDonutGauge(
@@ -29,28 +27,31 @@ fun HalfDonutGauge(
     max: Float,
     label: String,
     modifier: Modifier = Modifier,
-    brush: Brush = GradPalette.GREEN_TEAL,
+    chartHeight: androidx.compose.ui.unit.Dp = 140.dp,
     animated: Boolean = true
 ) {
+    var triggered by remember { mutableStateOf(false) }
     val progress by animateFloatAsState(
-        targetValue = (value / max).coerceIn(0f, 1f),
+        targetValue = if (triggered) (value / max).coerceIn(0f, 1f) else 0f,
         animationSpec = tween(1200, easing = EaseOutCubic),
         label = "GaugeAnim"
     )
+    LaunchedEffect(Unit) { triggered = true }
     
     val currentProgress = if (animated) progress else (value / max)
     val colors = SciFiTheme.extendedColors
+    val primary = colors.primary
 
-    Box(modifier = modifier, contentAlignment = Alignment.BottomCenter) {
+    Box(modifier = modifier.fillMaxWidth().height(chartHeight), contentAlignment = Alignment.BottomCenter) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             val strokeWidth = 16.dp.toPx()
-            val diameter = size.width - strokeWidth
+            val diameter = size.width - 32.dp.toPx()
             val arcSize = Size(diameter, diameter)
-            val topLeft = Offset(strokeWidth / 2, size.height - diameter / 2 - strokeWidth / 2)
+            val topLeft = Offset((size.width - diameter) / 2, size.height - diameter / 2)
             
             // Track Background
             drawArc(
-                color = colors.textDisabled.copy(alpha = 0.2f),
+                color = colors.textDisabled.copy(alpha = 0.1f),
                 startAngle = 180f,
                 sweepAngle = 180f,
                 useCenter = false,
@@ -59,9 +60,11 @@ fun HalfDonutGauge(
                 style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
             )
             
+            val arcBrush = Brush.sweepGradient(listOf(primary.copy(0.4f), primary))
+
             // Progress Arc Glow
             drawArc(
-                brush = brush,
+                brush = arcBrush,
                 startAngle = 180f,
                 sweepAngle = 180f * currentProgress,
                 useCenter = false,
@@ -73,7 +76,7 @@ fun HalfDonutGauge(
             
             // Progress Arc Sharp
             drawArc(
-                brush = brush,
+                brush = arcBrush,
                 startAngle = 180f,
                 sweepAngle = 180f * currentProgress,
                 useCenter = false,
@@ -86,24 +89,14 @@ fun HalfDonutGauge(
             val angle = 180f + (180f * currentProgress)
             val angleRad = Math.toRadians(angle.toDouble())
             val needleLen = diameter / 2 - 8.dp.toPx()
+            val pivot = Offset(center.x, size.height)
             val needleEnd = Offset(
-                center.x + needleLen * cos(angleRad).toFloat(),
-                (size.height - strokeWidth / 2) + needleLen * sin(angleRad).toFloat()
+                pivot.x + needleLen * cos(angleRad).toFloat(),
+                pivot.y + needleLen * sin(angleRad).toFloat()
             )
             
-            drawLine(
-                color = Color.White,
-                start = Offset(center.x, size.height - strokeWidth / 2),
-                end = needleEnd,
-                strokeWidth = 2.dp.toPx(),
-                cap = StrokeCap.Round
-            )
-            
-            drawCircle(
-                color = Color.White,
-                radius = 4.dp.toPx(),
-                center = Offset(center.x, size.height - strokeWidth / 2)
-            )
+            drawLine(Color.White, pivot, needleEnd, 2.dp.toPx(), cap = StrokeCap.Round)
+            drawCircle(Color.White, 4.dp.toPx(), pivot)
         }
         
         Column(
@@ -121,18 +114,5 @@ fun HalfDonutGauge(
                 color = colors.textSecondary
             )
         }
-    }
-}
-
-@Preview
-@Composable
-fun PreviewHalfDonutGauge() {
-    SciFiTheme.ProvideSciFiTheme(SciFiTheme.Theme.Cyberpunk) {
-        HalfDonutGauge(
-            value = 0.644f,
-            max = 1.0f,
-            label = "HDI INDEX",
-            modifier = Modifier.size(200.dp, 120.dp)
-        )
     }
 }

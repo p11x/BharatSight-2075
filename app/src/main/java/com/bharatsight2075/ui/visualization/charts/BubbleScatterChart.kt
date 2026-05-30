@@ -7,86 +7,58 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.bharatsight2075.ui.theme.GradPalette
 import com.bharatsight2075.ui.theme.SciFiTheme
+import com.bharatsight2075.ui.visualization.ChartMockData
+import com.bharatsight2075.ui.visualization.ChartType
+import com.bharatsight2075.ui.visualization.GradientFills
 
-data class BubbleData(val x: Float, val y: Float, val radius: Float, val label: String = "")
+data class BubblePoint(val x: Float, val y: Float, val r: Float, val color: Color = Color.Cyan)
 
 /**
  * C08. BubbleScatterChart
- * Circles at (x,y) positions, radius=value, gradient fill.
  */
 @Composable
 fun BubbleScatterChart(
-    data: List<BubbleData>,
+    data: List<BubblePoint>,
     modifier: Modifier = Modifier,
-    brush: Brush = GradPalette.TEAL_PURPLE,
+    chartHeight: androidx.compose.ui.unit.Dp = 200.dp,
     animated: Boolean = true
 ) {
+    val safeData = data.takeIf { it.isNotEmpty() } 
+        ?: remember { ChartMockData.generateMockData(ChartType.BUBBLE).map { it as Triple<Float, Float, Float> }.map { BubblePoint(it.first, it.second, it.third) } }
+    
+    var triggered by remember { mutableStateOf(false) }
     val progress by animateFloatAsState(
-        targetValue = 1f,
+        targetValue = if (triggered) 1f else 0f,
         animationSpec = tween(1200, easing = EaseOutCubic),
         label = "BubbleAnim"
     )
+    LaunchedEffect(Unit) { triggered = true }
     
     val currentProgress = if (animated) progress else 1f
 
-    Canvas(modifier = modifier) {
-        val width = size.width
-        val height = size.height
+    Canvas(modifier = modifier.fillMaxWidth().height(chartHeight)) {
+        if (safeData.isEmpty()) return@Canvas
         
-        val minX = data.minOf { it.x }; val maxX = data.maxOf { it.x }
-        val minY = data.minOf { it.y }; val maxY = data.maxOf { it.y }
+        val xMin = safeData.minOf { it.x }; val xMax = safeData.maxOf { it.x }
+        val yMin = safeData.minOf { it.y }; val yMax = safeData.maxOf { it.y }
+        val maxR = safeData.maxOf { it.r }.coerceAtLeast(0.001f)
         
-        data.forEach { bubble ->
-            val normX = (bubble.x - minX) / (maxX - minX).coerceAtLeast(0.1f)
-            val normY = (bubble.y - minY) / (maxY - minY).coerceAtLeast(0.1f)
+        safeData.forEach { point ->
+            val normX = (point.x - xMin) / (xMax - xMin).coerceAtLeast(0.001f) * size.width
+            val normY = size.height - (point.y - yMin) / (yMax - yMin).coerceAtLeast(0.001f) * size.height
+            val radius = (point.r / maxR) * 30.dp.toPx() * currentProgress
+            val center = Offset(normX, normY)
             
-            val center = Offset(normX * width, height - (normY * height))
-            val radius = bubble.radius * 20.dp.toPx() * currentProgress
-
-            // Pass 1: Outer Glow
-            drawCircle(
-                brush = brush,
-                radius = radius + 4.dp.toPx(),
-                center = center,
-                alpha = 0.2f
-            )
-            
-            // Pass 2: Main Bubble
-            drawCircle(
-                brush = brush,
-                radius = radius,
-                center = center,
-                alpha = 0.7f
-            )
-            
-            // Pass 3: Core highlight
-            drawCircle(
-                color = Color.White.copy(alpha = 0.3f),
-                radius = radius * 0.4f,
-                center = center.copy(x = center.x - radius * 0.2f, y = center.y - radius * 0.2f)
-            )
+            if (radius > 0.01f) {
+                // Glow
+                drawCircle(point.color.copy(alpha = 0.2f), radius * 1.6f, center)
+                
+                // Fill
+                val bubbleBrush = GradientFills.bubbleFill(point.color, center, radius)
+                drawCircle(bubbleBrush, radius, center)
+            }
         }
-    }
-}
-
-@Preview
-@Composable
-fun PreviewBubbleScatterChart() {
-    SciFiTheme.ProvideSciFiTheme(SciFiTheme.Theme.Cyberpunk) {
-        BubbleScatterChart(
-            data = listOf(
-                BubbleData(10f, 20f, 0.5f),
-                BubbleData(30f, 40f, 0.8f),
-                BubbleData(50f, 10f, 1.2f),
-                BubbleData(70f, 80f, 0.4f),
-                BubbleData(90f, 50f, 0.9f)
-            ),
-            modifier = Modifier.fillMaxWidth().height(200.dp)
-        )
     }
 }

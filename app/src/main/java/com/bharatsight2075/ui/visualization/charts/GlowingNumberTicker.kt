@@ -13,17 +13,13 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.bharatsight2075.ui.theme.GradPalette
 import com.bharatsight2075.ui.theme.SciFiTheme
-import java.text.NumberFormat
-import java.util.*
+import java.util.Locale
 
 /**
  * C24. GlowingNumberTicker
- * large animated counting-up number with glow.
  */
 @Composable
 fun GlowingNumberTicker(
@@ -31,29 +27,32 @@ fun GlowingNumberTicker(
     unit: String,
     delta: String,
     modifier: Modifier = Modifier,
-    brush: Brush = GradPalette.TEAL_PURPLE,
+    chartHeight: androidx.compose.ui.unit.Dp = 80.dp,
     animated: Boolean = true
 ) {
+    var triggered by remember { mutableStateOf(false) }
     val progress by animateFloatAsState(
-        targetValue = 1f,
+        targetValue = if (triggered) 1f else 0f,
         animationSpec = tween(2000, easing = FastOutSlowInEasing),
         label = "TickerAnim"
     )
+    LaunchedEffect(Unit) { triggered = true }
     
     val currentVal = if (animated) value * progress else value
-    val extendedColors = SciFiTheme.extendedColors
-    val primary = extendedColors.primary
-    val positive = extendedColors.positive
+    val colors = SciFiTheme.extendedColors
+    val primary = colors.primary
 
     Box(
         modifier = modifier
             .fillMaxWidth()
+            .height(chartHeight)
             .drawBehind {
+                val radius = (size.width / 2).coerceAtLeast(0.01f)
                 drawCircle(
                     brush = Brush.radialGradient(
                         colors = listOf(primary.copy(alpha = 0.08f), Color.Transparent),
                         center = center,
-                        radius = 120.dp.toPx()
+                        radius = radius
                     )
                 )
             },
@@ -65,15 +64,9 @@ fun GlowingNumberTicker(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
-                Text(
-                    text = "ESTIMATED 2075 GDP",
-                    style = SciFiTheme.typography.MetricLabel,
-                    color = primary.copy(alpha = 0.6f)
-                )
-                
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text(
-                        text = String.format("%.2f", currentVal),
+                        text = String.format(Locale.getDefault(), "%.2f", currentVal),
                         style = SciFiTheme.typography.HeroNumber.copy(fontSize = 36.sp),
                         color = primary
                     )
@@ -89,30 +82,17 @@ fun GlowingNumberTicker(
 
             Box(
                 modifier = Modifier
-                    .background(positive.copy(alpha = 0.15f), RoundedCornerShape(4.dp))
-                    .border(1.dp, positive.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
+                    .background(colors.positive.copy(alpha = 0.15f), RoundedCornerShape(4.dp))
+                    .border(1.dp, colors.positive.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
                     .padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
                 Text(
                     text = delta,
                     style = SciFiTheme.typography.ChartCaption,
-                    color = positive,
+                    color = colors.positive,
                     fontWeight = FontWeight.Bold
                 )
             }
         }
-    }
-}
-
-@Preview
-@Composable
-fun PreviewGlowingNumberTicker() {
-    SciFiTheme.ProvideSciFiTheme(SciFiTheme.Theme.Cyberpunk) {
-        GlowingNumberTicker(
-            value = 37.0f,
-            unit = "USD TRILLION",
-            delta = "▲ 8.1% YoY",
-            modifier = Modifier.padding(16.dp)
-        )
     }
 }

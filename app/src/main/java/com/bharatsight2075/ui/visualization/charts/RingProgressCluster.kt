@@ -11,45 +11,49 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.bharatsight2075.ui.theme.GradPalette
 import com.bharatsight2075.ui.theme.SciFiTheme
 
-data class RingData(val value: Float, val label: String, val brush: Brush)
+data class RingData(val value: Float, val label: String, val color: Color)
 
 /**
  * C12. RingProgressCluster
- * 3 concentric rings, each with gap and gradient arc, center stat.
  */
 @Composable
 fun RingProgressCluster(
     rings: List<RingData>,
     modifier: Modifier = Modifier,
+    chartHeight: androidx.compose.ui.unit.Dp = 200.dp,
     centerStat: String = "",
     animated: Boolean = true
 ) {
-    val progress by animateFloatAsState(
-        targetValue = 1f,
-        animationSpec = tween(1200, easing = EaseOutCubic),
-        label = "RingClusterAnim"
+    val safeRings = rings.takeIf { it.isNotEmpty() } ?: listOf(
+        RingData(0.8f, "A", Color.Cyan),
+        RingData(0.6f, "B", Color.Magenta),
+        RingData(0.4f, "C", Color.Yellow)
     )
+
+    var triggered by remember { mutableStateOf(false) }
+    val progress by animateFloatAsState(
+        targetValue = if (triggered) 1f else 0f,
+        animationSpec = tween(1200, easing = EaseOutCubic),
+        label = "RingAnim"
+    )
+    LaunchedEffect(Unit) { triggered = true }
     
     val currentProgress = if (animated) progress else 1f
     val colors = SciFiTheme.extendedColors
 
-    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+    Box(modifier = modifier.fillMaxWidth().height(chartHeight), contentAlignment = Alignment.Center) {
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val strokeWidth = 8.dp.toPx()
-            val baseRadius = size.minDimension / 2 - strokeWidth
+            val strokeWidth = 10.dp.toPx()
+            val baseRadius = (size.minDimension / 2 - 20.dp.toPx()).coerceAtLeast(1f)
             
-            rings.forEachIndexed { index, ring ->
-                val ringRadius = baseRadius - (index * (strokeWidth + 8.dp.toPx()))
-                val diameter = ringRadius * 2
-                val topLeft = Offset(center.x - ringRadius, center.y - ringRadius)
-                val arcSize = Size(diameter, diameter)
+            safeRings.forEachIndexed { i, ring ->
+                val r = (baseRadius - i * (strokeWidth + 8.dp.toPx())).coerceAtLeast(1f)
+                val arcSize = Size(r * 2, r * 2)
+                val topLeft = Offset(center.x - r, center.y - r)
                 
                 // Track
                 drawArc(
@@ -63,52 +67,33 @@ fun RingProgressCluster(
                 )
                 
                 // Progress
-                drawArc(
-                    brush = ring.brush,
-                    startAngle = -90f,
-                    sweepAngle = ring.value * 360f * currentProgress,
-                    useCenter = false,
-                    topLeft = topLeft,
-                    size = arcSize,
-                    style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
-                )
-                
-                // Progress Glow
-                drawArc(
-                    brush = ring.brush,
-                    startAngle = -90f,
-                    sweepAngle = ring.value * 360f * currentProgress,
-                    useCenter = false,
-                    topLeft = topLeft,
-                    size = arcSize,
-                    style = Stroke(width = strokeWidth + 4.dp.toPx(), cap = StrokeCap.Round),
-                    alpha = 0.2f
-                )
+                if (ring.value > 0.001f) {
+                    drawArc(
+                        brush = Brush.sweepGradient(listOf(ring.color.copy(alpha = 0.4f), ring.color)),
+                        startAngle = -90f,
+                        sweepAngle = 360f * ring.value * currentProgress,
+                        useCenter = false,
+                        topLeft = topLeft,
+                        size = arcSize,
+                        style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                    )
+                    
+                    // Glow
+                    drawArc(
+                        color = ring.color.copy(alpha = 0.2f),
+                        startAngle = -90f,
+                        sweepAngle = 360f * ring.value * currentProgress,
+                        useCenter = false,
+                        topLeft = topLeft,
+                        size = arcSize,
+                        style = Stroke(width = strokeWidth + 4.dp.toPx(), cap = StrokeCap.Round)
+                    )
+                }
             }
         }
         
         if (centerStat.isNotEmpty()) {
-            Text(
-                text = centerStat,
-                style = SciFiTheme.typography.HeroNumber.copy(fontSize = 18.sp),
-                color = colors.textPrimary
-            )
+            Text(centerStat, style = SciFiTheme.typography.HeroNumber.copy(fontSize = 20.sp), color = colors.textPrimary)
         }
-    }
-}
-
-@Preview
-@Composable
-fun PreviewRingProgressCluster() {
-    SciFiTheme.ProvideSciFiTheme(SciFiTheme.Theme.Cyberpunk) {
-        RingProgressCluster(
-            rings = listOf(
-                RingData(0.81f, "GDP", GradPalette.TEAL_PURPLE),
-                RingData(0.65f, "INF", GradPalette.ORANGE_PINK),
-                RingData(0.42f, "TRD", GradPalette.GREEN_TEAL)
-            ),
-            centerStat = "81%",
-            modifier = Modifier.size(200.dp)
-        )
     }
 }

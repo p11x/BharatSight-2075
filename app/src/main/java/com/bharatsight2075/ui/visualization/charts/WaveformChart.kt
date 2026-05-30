@@ -8,21 +8,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.bharatsight2075.ui.theme.GradPalette
 import com.bharatsight2075.ui.theme.SciFiTheme
+import com.bharatsight2075.ui.visualization.GradientFills
 import kotlin.math.sin
 
 /**
  * C11. WaveformChart
- * Sinusoidal smooth wave, animated phase shift.
  */
 @Composable
 fun WaveformChart(
     modifier: Modifier = Modifier,
-    brush: Brush = GradPalette.CYAN_WHITE,
-    strokeColor: Color = Color(0xFF00F5FF),
+    chartHeight: androidx.compose.ui.unit.Dp = 120.dp,
+    brush: Brush = Brush.verticalGradient(listOf(Color.Cyan, Color.Transparent)),
     animated: Boolean = true
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "WaveAnim")
@@ -35,7 +33,9 @@ fun WaveformChart(
         ), label = "Phase"
     )
 
-    Canvas(modifier = modifier) {
+    val primary = SciFiTheme.extendedColors.primary
+
+    Canvas(modifier = modifier.fillMaxWidth().height(chartHeight)) {
         val width = size.width
         val height = size.height
         val centerY = height / 2
@@ -49,44 +49,21 @@ fun WaveformChart(
             Offset(x.toFloat(), centerY + sin(angle.toDouble()).toFloat() * amplitude)
         }
         
-        path.moveTo(points[0].x, points[0].y)
-        points.drop(1).forEach { path.lineTo(it.x, it.y) }
-        
-        fillPath.addPath(path)
-        fillPath.lineTo(width, height)
-        fillPath.lineTo(0f, height)
-        fillPath.close()
-        
-        // Area Fill
-        drawPath(
-            path = fillPath,
-            brush = Brush.verticalGradient(
-                listOf(strokeColor.copy(alpha = 0.3f), Color.Transparent)
-            )
-        )
-        
-        // Glow Stroke
-        drawPath(
-            path = path,
-            color = strokeColor.copy(alpha = 0.2f),
-            style = Stroke(width = 8.dp.toPx(), cap = StrokeCap.Round)
-        )
-        
-        // Sharp Stroke
-        drawPath(
-            path = path,
-            color = strokeColor,
-            style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round)
-        )
-    }
-}
-
-@Preview
-@Composable
-fun PreviewWaveformChart() {
-    SciFiTheme.ProvideSciFiTheme(SciFiTheme.Theme.Cyberpunk) {
-        WaveformChart(
-            modifier = Modifier.fillMaxWidth().height(150.dp)
-        )
+        if (points.isNotEmpty()) {
+            path.moveTo(points[0].x, points[0].y)
+            points.drop(1).forEach { path.lineTo(it.x, it.y) }
+            
+            fillPath.addPath(path)
+            fillPath.lineTo(width, height)
+            fillPath.lineTo(0f, height)
+            fillPath.close()
+            
+            // Area Fill
+            drawPath(fillPath, GradientFills.areaFill(primary, height))
+            
+            // Strokes
+            drawPath(path, primary.copy(alpha = 0.2f), style = Stroke(8.dp.toPx()))
+            drawPath(path, primary, style = Stroke(2.dp.toPx()))
+        }
     }
 }

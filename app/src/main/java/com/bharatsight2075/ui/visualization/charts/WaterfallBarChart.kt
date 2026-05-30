@@ -8,87 +8,79 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.*
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.bharatsight2075.ui.theme.GradPalette
 import com.bharatsight2075.ui.theme.SciFiTheme
+import com.bharatsight2075.ui.visualization.ChartMockData
+import com.bharatsight2075.ui.visualization.ChartType
+import com.bharatsight2075.ui.visualization.GradientFills
 
 /**
  * C19. WaterfallBarChart
- * Running total bars, connector lines.
  */
 @Composable
 fun WaterfallBarChart(
-    data: List<Float>, // Deltas (can be negative)
+    data: List<Float>,
     modifier: Modifier = Modifier,
+    chartHeight: androidx.compose.ui.unit.Dp = 180.dp,
     animated: Boolean = true
 ) {
+    val safeData = data.takeIf { it.isNotEmpty() } 
+        ?: remember { ChartMockData.generateMockData(ChartType.WATERFALL).filterIsInstance<Float>() }
+    
+    var triggered by remember { mutableStateOf(false) }
     val progress by animateFloatAsState(
-        targetValue = 1f,
+        targetValue = if (triggered) 1f else 0f,
         animationSpec = tween(1200, easing = EaseOutCubic),
         label = "WaterfallAnim"
     )
+    LaunchedEffect(Unit) { triggered = true }
     
     val currentProgress = if (animated) progress else 1f
 
-    Canvas(modifier = modifier) {
-        val width = size.width
-        val height = size.height
-        val barCount = data.size
-        val barWidth = (width / (barCount * 1.5f))
-        val spacing = (width - (barWidth * barCount)) / (barCount + 1)
+    Canvas(modifier = modifier.fillMaxWidth().height(chartHeight)) {
+        val count = safeData.size.coerceAtLeast(1)
+        val totalGap = size.width * 0.3f
+        val barWidth = (size.width - totalGap) / count
+        val gap = totalGap / (count + 1)
         
         // Calculate running totals
-        val runningTotals = FloatArray(barCount + 1)
-        for (i in 0 until barCount) {
-            runningTotals[i + 1] = runningTotals[i] + data[i]
+        val runningTotals = FloatArray(count + 1)
+        for (i in 0 until count) {
+            runningTotals[i + 1] = runningTotals[i] + safeData[i]
         }
         
-        val maxVal = runningTotals.maxOf { Math.abs(it) }.coerceAtLeast(0.1f)
-        val centerY = height / 2 // Simplified baseline
+        val maxVal = runningTotals.maxOf { Math.abs(it) }.coerceAtLeast(0.001f)
+        val centerY = size.height / 2
         
-        runningTotals.drop(1).forEachIndexed { index, total ->
-            val prevTotal = runningTotals[index]
-            val x = spacing + (index * (barWidth + spacing))
+        runningTotals.drop(1).forEachIndexed { i, total ->
+            val prevTotal = runningTotals[i]
+            val x = gap + i * (barWidth + gap)
             
-            val yPrev = centerY - (prevTotal / maxVal) * (height / 2)
-            val yCurr = centerY - (total / maxVal) * (height / 2)
+            val yPrev = centerY - (prevTotal / maxVal) * (size.height / 2)
+            val yCurr = centerY - (total / maxVal) * (size.height / 2)
             
-            val isPositive = data[index] >= 0
+            val isPositive = safeData[i] >= 0
             val color = if (isPositive) Color(0xFF00E676) else Color(0xFFFF5252)
             
-            // Draw Connector
-            if (index > 0) {
+            val barHeight = Math.abs(yPrev - yCurr) * currentProgress
+            val barTop = if (isPositive) yCurr else yPrev
+            
+            drawRect(
+                brush = GradientFills.barFill(color, color.copy(alpha = 0.4f), barTop, barTop + barHeight),
+                topLeft = Offset(x, barTop),
+                size = Size(barWidth, barHeight)
+            )
+            
+            // Connector
+            if (i > 0) {
                 drawLine(
                     color = Color.White.copy(alpha = 0.3f),
-                    start = Offset(x - spacing, yPrev),
+                    start = Offset(x - gap, yPrev),
                     end = Offset(x, yPrev),
                     strokeWidth = 1.dp.toPx(),
                     pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f))
                 )
             }
-            
-            // Draw Bar
-            val barHeight = Math.abs(yPrev - yCurr) * currentProgress
-            val barTop = if (isPositive) yCurr else yPrev
-            
-            drawRect(
-                brush = Brush.verticalGradient(listOf(color, color.copy(alpha = 0.6f))),
-                topLeft = Offset(x, barTop),
-                size = Size(barWidth, barHeight)
-            )
         }
-    }
-}
-
-@Preview
-@Composable
-fun PreviewWaterfallBarChart() {
-    SciFiTheme.ProvideSciFiTheme(SciFiTheme.Theme.Cyberpunk) {
-        WaterfallBarChart(
-            data = listOf(40f, 20f, -30f, 50f, -10f, 25f),
-            modifier = Modifier.fillMaxWidth().height(200.dp)
-        )
     }
 }
