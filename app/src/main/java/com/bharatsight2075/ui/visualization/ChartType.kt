@@ -8,10 +8,6 @@ sealed class VisualizationData {
     data class TimeSeries(val points: List<Point>) : VisualizationData()
     @Stable
     data class Composition(val segments: List<Segment>) : VisualizationData()
-    @Stable
-    data class Network(val nodes: List<Node>, val edges: List<Edge>) : VisualizationData()
-    @Stable
-    data class Spatial(val coordinates: List<GeoPoint>) : VisualizationData()
 }
 
 @Stable
@@ -24,24 +20,6 @@ data class Segment(
     val maxValue: Float = 100f, 
     val color: androidx.compose.ui.graphics.Color? = null
 )
-
-@Stable
-data class Node(
-    val id: String,
-    val label: String,
-    val category: Int = 0,
-    val value: Float = 1f
-)
-
-@Stable
-data class Edge(
-    val from: String,
-    val to: String,
-    val value: Float = 1f
-)
-
-@Stable
-data class GeoPoint(val lat: Float, val lng: Float, val value: Float = 1f, val label: String = "")
 
 enum class ChartType {
     AREA,
@@ -68,5 +46,24 @@ enum class ChartType {
     PARTICLE_FLOW,
     MIRROR_BAR,
     NUMBER_TICKER,
-    MINI_SPARKLINE
+    MINI_SPARKLINE,
+    CHOROPLETH_MAP,
+    FORCE_GRAPH,
+    LIQUID_GAUGE,
+    BAR_RACE,
+    BUBBLE_TREE,
+    CANDLE_DEPTH,
+    RIVER_MAP,
+    SPIRAL_TIMELINE,
+    HEX_MAP,
+    RADAR_SCAN,
+    CONE_CHART,
+    RING_ORBITAL,
+    WATERFALL_SPEC,
+    BOND_GRAPH,
+    HEAT_SPIRAL,
+    GRAVITY_SCATTER,
+    SANKEY_RIVER,
+    TERRACE_FILL,
+    FLOW_MATRIX
 }

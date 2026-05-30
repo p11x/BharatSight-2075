@@ -3,41 +3,38 @@ package com.bharatsight2075.ui.components
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bharatsight2075.ui.theme.SciFiTheme
 
+/**
+ * High-fidelity TopBar that switches between Home and Section modes.
+ */
 sealed class TopBarMode {
     data class Home(
         val userName: String,
         val onMenuClick: () -> Unit,
-        val onSettingsClick: () -> Unit = {},
+        val onSettingsClick: () -> Unit,
+        val onNotificationsClick: () -> Unit = {},
         val liveStatusText: String = "SYSTEMS ONLINE",
         val notificationCount: Int = 0
     ) : TopBarMode()
@@ -53,276 +50,140 @@ sealed class TopBarMode {
 
 data class TopBarAction(val icon: ImageVector, val contentDesc: String, val onClick: () -> Unit)
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BharatSightTopBar(
     mode: TopBarMode,
     modifier: Modifier = Modifier
 ) {
     val extendedColors = SciFiTheme.extendedColors
-    val height = when (mode) {
-        is TopBarMode.Home -> 60.dp
-        is TopBarMode.Section -> 56.dp
-    }
+    val primary = extendedColors.primary
+    val isCyberpunk = SciFiTheme.current == SciFiTheme.Theme.Cyberpunk
+    
+    val backgroundColor = if (isCyberpunk) Color(0xFF080810) else Color(0xFF040C18)
 
-    var isVisible by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { isVisible = true }
-
-    AnimatedVisibility(
-        visible = isVisible,
-        enter = slideInVertically(
-            initialOffsetY = { -it },
-            animationSpec = tween(300, easing = EaseOutCubic)
-        ) + fadeIn(animationSpec = tween(300))
-    ) {
-        Surface(
-            modifier = modifier
-                .fillMaxWidth()
-                .height(height)
-                .drawBehind {
-                    val alpha = if (mode is TopBarMode.Home) 0.25f else 0.2f
-                    drawLine(
-                        color = extendedColors.primary.copy(alpha = alpha),
-                        start = Offset(0f, size.height),
-                        end = Offset(size.width, size.height),
-                        strokeWidth = 1.dp.toPx()
-                    )
-                },
-            color = extendedColors.surface
-        ) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                if (mode is TopBarMode.Home) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                Brush.horizontalGradient(
-                                    listOf(
-                                        extendedColors.primary.copy(alpha = 0.08f),
-                                        Color.Transparent,
-                                        extendedColors.accent.copy(alpha = 0.05f)
-                                    )
-                                )
-                            )
-                    )
+    TopAppBar(
+        modifier = modifier
+            .drawBehind {
+                drawLine(
+                    color = primary.copy(alpha = 0.2f),
+                    start = androidx.compose.ui.geometry.Offset(0f, size.height),
+                    end = androidx.compose.ui.geometry.Offset(size.width, size.height),
+                    strokeWidth = 1.dp.toPx()
+                )
+            },
+        title = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                when (mode) {
+                    is TopBarMode.Home -> HomeTopBarContent(mode)
+                    is TopBarMode.Section -> SectionTopBarContent(mode)
                 }
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    when (mode) {
-                        is TopBarMode.Home -> HomeTopBarContent(mode)
-                        is TopBarMode.Section -> SectionTopBarContent(mode)
+            }
+        },
+        navigationIcon = {
+            if (mode is TopBarMode.Home) {
+                IconButton(onClick = mode.onMenuClick) {
+                    Icon(Icons.Default.Menu, contentDescription = "Menu", tint = primary)
+                }
+            } else if (mode is TopBarMode.Section) {
+                IconButton(onClick = mode.onBackClick) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = primary)
+                }
+            }
+        },
+        actions = {
+            if (mode is TopBarMode.Home) {
+                IconButton(onClick = mode.onNotificationsClick) {
+                    BadgedBox(
+                        badge = {
+                            if (mode.notificationCount > 0) {
+                                Badge(containerColor = extendedColors.accent) {
+                                    Text(mode.notificationCount.toString())
+                                }
+                            }
+                        }
+                    ) {
+                        Icon(Icons.Default.Notifications, contentDescription = "Notifications", tint = primary)
+                    }
+                }
+                IconButton(onClick = mode.onSettingsClick) {
+                    Icon(Icons.Default.Settings, contentDescription = "Settings", tint = primary)
+                }
+            } else if (mode is TopBarMode.Section) {
+                mode.actions.forEach { action ->
+                    IconButton(onClick = action.onClick) {
+                        Icon(action.icon, contentDescription = action.contentDesc, tint = primary)
                     }
                 }
             }
-        }
-    }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = backgroundColor,
+            titleContentColor = Color.White
+        )
+    )
 }
 
 @Composable
-private fun RowScope.HomeTopBarContent(mode: TopBarMode.Home) {
-    val colors = SciFiTheme.extendedColors
-    
-    // LEFT - Menu
-    Box(contentAlignment = Alignment.CenterStart) {
-        // Accent Bar
-        Box(
-            modifier = Modifier
-                .width(2.dp)
-                .height(4.dp)
-                .background(colors.primary)
-        )
-        IconButton(
-            onClick = mode.onMenuClick,
-            modifier = Modifier
-                .padding(start = 4.dp)
-                .size(44.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Menu,
-                contentDescription = "Menu",
-                tint = colors.primary,
-                modifier = Modifier.size(24.dp)
+private fun HomeTopBarContent(mode: TopBarMode.Home) {
+    val extendedColors = SciFiTheme.extendedColors
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "Hi, ${mode.userName}",
+                style = SciFiTheme.typography.BodyMono.copy(fontWeight = FontWeight.Bold),
+                color = Color.White
             )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text("👋", fontSize = 14.sp)
         }
-    }
-
-    // CENTER - Greeting
-    Column(
-        modifier = Modifier.weight(1f),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "Hi, ${mode.userName} 👋",
-            style = MaterialTheme.typography.bodyLarge.copy(
-                fontSize = 15.sp,
-                fontWeight = FontWeight.SemiBold
-            ),
-            color = colors.textPrimary,
-            textAlign = TextAlign.Center
-        )
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            val infiniteTransition = rememberInfiniteTransition(label = "Pulse")
-            val scale by infiniteTransition.animateFloat(
-                initialValue = 0.7f,
-                targetValue = 1.3f,
-                animationSpec = infiniteRepeatable(
-                    animation = tween(900),
-                    repeatMode = RepeatMode.Reverse
-                ), label = "dotScale"
-            )
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
                 modifier = Modifier
-                    .size(4.dp)
-                    .drawBehind {
-                        drawCircle(
-                            color = Color(0xFF00E676),
-                            radius = (size.width / 2) * scale
-                        )
-                    }
+                    .size(6.dp)
                     .background(Color(0xFF00E676), CircleShape)
+                    .drawBehind {
+                        drawCircle(Color(0xFF00E676).copy(alpha = 0.4f), radius = 6.dp.toPx())
+                    }
             )
             Spacer(modifier = Modifier.width(6.dp))
             Text(
                 text = mode.liveStatusText,
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontSize = 9.sp,
-                    letterSpacing = 0.1.sp
-                ),
-                color = Color(0xFF00E676).copy(alpha = 0.85f)
-            )
-        }
-    }
-
-    // RIGHT - Notifications + Settings
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Box {
-            IconButton(onClick = { /* Notifications */ }) {
-                Icon(
-                    imageVector = Icons.Outlined.Notifications,
-                    contentDescription = "Notifications",
-                    tint = colors.primary.copy(alpha = 0.8f)
-                )
-            }
-            if (mode.notificationCount > 0) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(top = 10.dp, end = 10.dp)
-                        .size(6.dp)
-                        .background(Color.Red, CircleShape)
-                )
-            }
-        }
-        IconButton(onClick = mode.onSettingsClick) {
-            Icon(
-                imageVector = Icons.Outlined.Settings,
-                contentDescription = "Settings",
-                tint = colors.primary.copy(alpha = 0.6f)
+                style = SciFiTheme.typography.MetricLabel,
+                color = Color(0xFF00E676),
+                fontSize = 9.sp
             )
         }
     }
 }
 
 @Composable
-private fun RowScope.SectionTopBarContent(mode: TopBarMode.Section) {
-    val colors = SciFiTheme.extendedColors
-    
-    // LEFT - Back
-    Box(
-        modifier = Modifier
-            .size(36.dp)
-            .border(1.dp, colors.primary.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
-            .clip(RoundedCornerShape(8.dp))
-            .clickable { mode.onBackClick() },
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-            contentDescription = "Back",
-            tint = colors.primary,
-            modifier = Modifier.size(22.dp)
-        )
-    }
-
-    // CENTER - Title + Badge
-    var titleAlpha by remember { mutableStateOf(0f) }
-    LaunchedEffect(Unit) {
-        kotlinx.coroutines.delay(100)
-        titleAlpha = 1f
-    }
-    val animatedAlpha by animateFloatAsState(
-        targetValue = titleAlpha,
-        animationSpec = tween(400),
-        label = "TitleAlpha"
-    )
-
-    Row(
-        modifier = Modifier
-            .weight(1f)
-            .padding(horizontal = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
-    ) {
+private fun SectionTopBarContent(mode: TopBarMode.Section) {
+    val primary = SciFiTheme.extendedColors.primary
+    Row(verticalAlignment = Alignment.CenterVertically) {
         Text(
             text = mode.title,
-            style = SciFiTheme.typography.BodyMono.copy(
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold
-            ),
-            color = colors.textPrimary,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.alpha(animatedAlpha)
+            style = SciFiTheme.typography.BodyMono.copy(fontWeight = FontWeight.Bold, fontSize = 16.sp),
+            color = Color.White
         )
-        
         if (mode.badge != null) {
             Spacer(modifier = Modifier.width(8.dp))
-            val badgeColor = mode.badgeColor ?: colors.primary
-            Box(
-                modifier = Modifier
-                    .border(1.dp, badgeColor.copy(alpha = 0.7f), RoundedCornerShape(4.dp))
-                    .background(badgeColor.copy(alpha = 0.12f))
-                    .padding(horizontal = 6.dp, vertical = 2.dp)
+            Surface(
+                color = (mode.badgeColor ?: primary).copy(alpha = 0.15f),
+                shape = RoundedCornerShape(4.dp),
+                border = androidx.compose.foundation.BorderStroke(0.5.dp, (mode.badgeColor ?: primary).copy(alpha = 0.5f))
             ) {
                 Text(
                     text = mode.badge,
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontSize = 8.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        letterSpacing = 0.1.sp
-                    ),
-                    color = badgeColor
+                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                    fontSize = 9.sp,
+                    color = mode.badgeColor ?: primary,
+                    style = SciFiTheme.typography.BodyMono
                 )
-            }
-        }
-    }
-
-    // RIGHT - Actions
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        if (mode.actions.isEmpty()) {
-            IconButton(onClick = { /* Share */ }) {
-                Icon(
-                    imageVector = Icons.Outlined.Share,
-                    contentDescription = "Share",
-                    tint = colors.primary.copy(alpha = 0.7f)
-                )
-            }
-        } else {
-            mode.actions.forEach { action ->
-                IconButton(onClick = action.onClick) {
-                    Icon(
-                        imageVector = action.icon,
-                        contentDescription = action.contentDesc,
-                        tint = colors.primary.copy(alpha = 0.7f)
-                    )
-                }
             }
         }
     }
@@ -336,22 +197,8 @@ fun PreviewHomeTopBar() {
             mode = TopBarMode.Home(
                 userName = "Pavan",
                 onMenuClick = {},
-                notificationCount = 2
-            )
-        )
-    }
-}
-
-@Preview
-@Composable
-fun PreviewSectionTopBar() {
-    SciFiTheme.ProvideSciFiTheme(SciFiTheme.Theme.Hologram) {
-        BharatSightTopBar(
-            mode = TopBarMode.Section(
-                title = "Macro Overview",
-                badge = "LIVE",
-                badgeColor = Color(0xFF00E676),
-                onBackClick = {}
+                onSettingsClick = {},
+                notificationCount = 5
             )
         )
     }

@@ -1,39 +1,34 @@
 package com.bharatsight2075.ui.screens
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.TrendingUp
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalAccessibilityManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bharatsight2075.ui.components.BharatSightTopBar
+import com.bharatsight2075.ui.components.TopBarAction
 import com.bharatsight2075.ui.components.TopBarMode
-import com.bharatsight2075.ui.microinteraction.crtScanlineOverlay
+import com.bharatsight2075.ui.microinteraction.DecodingText
 import com.bharatsight2075.ui.theme.GridBackgroundSurface
 import com.bharatsight2075.ui.theme.SciFiTheme
-import kotlinx.coroutines.delay
 
 @Composable
 fun HomeScreen(
@@ -41,42 +36,46 @@ fun HomeScreen(
     onMenuClick: () -> Unit,
     onSettingsClick: () -> Unit,
     userName: String = "Pavan",
-    notificationCount: Int = 0
+    notificationCount: Int = 3
 ) {
-    BackHandler { /* Handle Home back logic */ }
-
-    GridBackgroundSurface(modifier = Modifier.fillMaxSize().crtScanlineOverlay()) {
-        Scaffold(
-            containerColor = Color.Transparent,
-            topBar = {
-                BharatSightTopBar(
-                    mode = TopBarMode.Home(
-                        userName = userName,
-                        onMenuClick = onMenuClick,
-                        onSettingsClick = onSettingsClick,
-                        notificationCount = notificationCount
-                    )
+    Scaffold(
+        topBar = {
+            BharatSightTopBar(
+                mode = TopBarMode.Home(
+                    userName = userName,
+                    notificationCount = notificationCount,
+                    onMenuClick = onMenuClick,
+                    onNotificationsClick = { /* Handle */ },
+                    onSettingsClick = onSettingsClick
                 )
-            }
-        ) { padding ->
+            )
+        },
+        containerColor = Color.Transparent
+    ) { padding ->
+        GridBackgroundSurface(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item { HomeHeaderSection() }
 
+                // --- CORE OBSERVATORY ---
+                item { SectionGroupHeader("CORE OBSERVATORY") }
+                
                 item {
                     SectionCard(
                         index = 0,
                         title = "Macro Overview",
-                        subtitle = "Live GDP, inflation, repo rate & key economic indicators",
+                        badge = "LIVE",
                         icon = Icons.Outlined.Dashboard,
                         accentColor = SciFiTheme.extendedColors.primary,
-                        badge = "LIVE",
-                        metrics = listOf("GDP 2075" to "$37T", "Inflation" to "4.2%", "Growth" to "8.1%"),
+                        description = "Live GDP, inflation, repo rate & key economic indicators",
+                        metrics = listOf("$37T" to "GDP 2075", "4.2%" to "Inflation", "8.1%" to "Growth"),
                         onClick = { onNavigate(Routes.MACRO) }
                     )
                 }
@@ -85,11 +84,11 @@ fun HomeScreen(
                     SectionCard(
                         index = 1,
                         title = "Economic Forecaster",
-                        subtitle = "Simulate 50-year GDP trajectories with policy parameters",
-                        icon = Icons.AutoMirrored.Outlined.TrendingUp,
-                        accentColor = SciFiTheme.extendedColors.accent,
                         badge = "AI",
-                        metrics = listOf("Scenarios" to "4", "Horizon" to "50yr", "Model" to "TFLite"),
+                        icon = Icons.Outlined.Timeline,
+                        accentColor = SciFiTheme.extendedColors.accent,
+                        description = "Simulate 50-year GDP trajectories with policy parameters",
+                        metrics = listOf("4" to "Scenarios", "50yr" to "Horizon", "TFLite" to "Model"),
                         onClick = { onNavigate(Routes.FORECASTER) }
                     )
                 }
@@ -98,11 +97,11 @@ fun HomeScreen(
                     SectionCard(
                         index = 2,
                         title = "India Economic Map",
-                        subtitle = "Interactive state map with FDI and trade arc visualizations",
+                        badge = "36 STATES",
                         icon = Icons.Outlined.Public,
                         accentColor = Color(0xFF00E676),
-                        badge = "36 STATES",
-                        metrics = listOf("States" to "36", "Trade Arcs" to "142", "FDI Flows" to "Live"),
+                        description = "Interactive state map with FDI and trade arc visualizations",
+                        metrics = listOf("36" to "States", "142" to "Trade Arcs", "Live" to "FDI Flows"),
                         onClick = { onNavigate(Routes.GLOBE) }
                     )
                 }
@@ -111,173 +110,361 @@ fun HomeScreen(
                     SectionCard(
                         index = 3,
                         title = "Macro Indicator Hub",
-                        subtitle = "CPI · WPI · IIP · PMI · Fiscal Deficit · FX Reserves orbit panel",
-                        icon = Icons.Outlined.Radar,
-                        accentColor = Color(0xFFFFD600),
                         badge = "LIVE",
-                        metrics = listOf("Indicators" to "12", "Alerts" to "3", "Anomalies" to "1"),
+                        icon = Icons.Outlined.TrackChanges,
+                        accentColor = Color(0xFFFFD600),
+                        description = "CPI · WPI · IIP · PMI · Fiscal Deficit · FX Reserves orbit panel",
+                        metrics = listOf("12" to "Indicators", "3" to "Alerts", "1" to "Anomalies"),
                         onClick = { onNavigate(Routes.OBSERVATORY) }
                     )
                 }
 
+                // --- SECTORS & INDUSTRIES ---
+                item { SectionGroupHeader("SECTORS & INDUSTRIES") }
+                
                 item {
                     SectionCard(
                         index = 4,
-                        title = "State Deep Dive",
-                        subtitle = "GSDP profiles, HDI, and 2035 forecasts for all 36 states & UTs",
-                        icon = Icons.Outlined.Map,
-                        accentColor = Color(0xFFB39DDB),
-                        badge = "36 STATES",
-                        metrics = listOf("States" to "36", "UTs" to "8", "Years" to "2000–35"),
-                        onClick = { onNavigate(Routes.STATES) }
+                        title = "Agriculture",
+                        badge = "KHARIF",
+                        icon = Icons.Outlined.Grass,
+                        accentColor = Color(0xFF76C442),
+                        description = "Crop production, MSP trends and monsoon impact analytics",
+                        metrics = listOf("23" to "Crops", "28" to "States", "₹2,183" to "MSP"),
+                        onClick = { onNavigate(Routes.AGRICULTURE) }
                     )
                 }
 
                 item {
                     SectionCard(
                         index = 5,
-                        title = "Nifty 500 Heatmap",
-                        subtitle = "Live market cap treemap with 1-day return color coding",
-                        icon = Icons.Outlined.BarChart,
-                        accentColor = Color(0xFF4FC3F7),
-                        badge = "LIVE",
-                        metrics = listOf("Stocks" to "500", "Sectors" to "12", "Refresh" to "5s"),
-                        onClick = { onNavigate(Routes.MARKET) }
+                        title = "Banking & Finance",
+                        badge = "RBI",
+                        icon = Icons.Outlined.AccountBalance,
+                        accentColor = Color(0xFF00B0FF),
+                        description = "Credit growth, NPA analysis and interbank flow networks",
+                        metrics = listOf("156" to "Banks", "3.9%" to "NPA", "16.8%" to "CRAR"),
+                        onClick = { onNavigate(Routes.BANKING) }
                     )
                 }
 
                 item {
                     SectionCard(
                         index = 6,
-                        title = "Global Trade Network",
-                        subtitle = "Force-directed graph of India's top 30 trading partners",
-                        icon = Icons.Outlined.AccountTree,
-                        accentColor = Color(0xFFFF6B35),
-                        badge = "30 PARTNERS",
-                        metrics = listOf("Partners" to "30", "Trade Vol" to "$1.2T", "Surplus" to "8"),
-                        onClick = { onNavigate(Routes.TRADE) }
+                        title = "Energy & Power",
+                        badge = "RENEWABLE",
+                        icon = Icons.Outlined.Bolt,
+                        accentColor = Color(0xFFFFD600),
+                        description = "Grid load, solar capacity race and carbon intensity metrics",
+                        metrics = listOf("950GW" to "Capacity", "46%" to "Renewable", "0.4%" to "Deficit"),
+                        onClick = { onNavigate(Routes.ENERGY) }
                     )
                 }
 
                 item {
                     SectionCard(
                         index = 7,
-                        title = "AI Query Engine",
-                        subtitle = "Ask natural language questions about India's economy",
-                        icon = Icons.Outlined.Psychology,
-                        accentColor = Color(0xFF7C4DFF),
-                        badge = "GEMINI NANO",
-                        metrics = listOf("Model" to "Gemini Nano", "Language" to "Hi+En", "Mode" to "On-device"),
-                        onClick = { onNavigate(Routes.QUERY) }
+                        title = "Smart Cities",
+                        badge = "GATI SHAKTI",
+                        icon = Icons.Outlined.LocationCity,
+                        accentColor = Color(0xFF4FC3F7),
+                        description = "Urban infrastructure, NH network and metro ridership data",
+                        metrics = listOf("100" to "Cities", "1.46L" to "NH km", "945" to "Metro km"),
+                        onClick = { onNavigate(Routes.SMART_CITIES) }
                     )
                 }
 
                 item {
                     SectionCard(
                         index = 8,
-                        title = "Sector Analysis",
-                        subtitle = "Radar chart breakdown of 8 economic sectors",
-                        icon = Icons.Outlined.DonutSmall,
-                        accentColor = SciFiTheme.extendedColors.primary,
-                        onClick = { onNavigate(Routes.SECTOR) }
+                        title = "Startup Ecosystem",
+                        badge = "113 UNICORNS",
+                        icon = Icons.Outlined.RocketLaunch,
+                        accentColor = Color(0xFF7C4DFF),
+                        description = "Funding race, deal flow sankey and innovation radar",
+                        metrics = listOf("1.2L" to "Startups", "113" to "Unicorns", "$42B" to "Funding"),
+                        onClick = { onNavigate(Routes.STARTUP) }
+                    )
+                }
+
+                // --- ECONOMY & SOCIETY ---
+                item { SectionGroupHeader("ECONOMY & SOCIETY") }
+
+                item {
+                    SectionCard(
+                        index = 9,
+                        title = "Defence Strategic",
+                        badge = "ATMANIRBHAR",
+                        icon = Icons.Outlined.Security,
+                        accentColor = Color(0xFFFF5252),
+                        description = "Indigenisation, modernisation funnel and threat radar",
+                        metrics = listOf("₹6.2L Cr" to "Budget", "$2.5B" to "Export", "350+" to "HAL Ord"),
+                        onClick = { onNavigate(Routes.DEFENCE) }
                     )
                 }
 
                 item {
                     SectionCard(
-                        index = 9,
-                        title = "Demographics",
-                        subtitle = "Population pyramid, urbanization trends, and HDI",
-                        icon = Icons.Outlined.People,
-                        accentColor = Color(0xFFF06292),
-                        badge = "2075 PROJ",
-                        onClick = { onNavigate(Routes.DEMOGRAPHICS) }
+                        index = 10,
+                        title = "Climate & Green",
+                        badge = "NET ZERO",
+                        icon = Icons.Outlined.EnergySavingsLeaf,
+                        accentColor = Color(0xFF00E676),
+                        description = "Carbon budget, air quality and green finance flows",
+                        metrics = listOf("2.8GT" to "CO₂", "24%" to "Forest", "45%" to "NDC"),
+                        onClick = { onNavigate(Routes.CLIMATE) }
                     )
                 }
 
                 item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(80.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "BharatSight 2075 · Data updated ${System.currentTimeMillis()}",
-                            style = SciFiTheme.typography.ChartCaption,
-                            color = SciFiTheme.extendedColors.primary.copy(0.4f)
-                        )
-                    }
+                    SectionCard(
+                        index = 11,
+                        title = "Digital Economy",
+                        badge = "₹ UPI",
+                        icon = Icons.Outlined.PhoneAndroid,
+                        accentColor = Color(0xFF00F5FF),
+                        description = "Digital adoption, UPI waves and fintech unicorn bubbles",
+                        metrics = listOf("14B/mo" to "UPI Txn", "850M" to "Internet", "$120B" to "e-Comm"),
+                        onClick = { onNavigate(Routes.DIGITAL_ECONOMY) }
+                    )
                 }
+
+                item {
+                    SectionCard(
+                        index = 12,
+                        title = "Education & Skill",
+                        badge = "NEP 2020",
+                        icon = Icons.Outlined.School,
+                        accentColor = Color(0xFFFFC107),
+                        description = "Literacy spiral, skill gap radar and edtech investment",
+                        metrics = listOf("28.4%" to "GER", "51M/yr" to "Skilled", "56K+" to "Inst"),
+                        onClick = { onNavigate(Routes.EDUCATION) }
+                    )
+                }
+
+                item {
+                    SectionCard(
+                        index = 13,
+                        title = "Healthcare & Pharma",
+                        badge = "GLOBAL HUB",
+                        icon = Icons.Outlined.HealthAndSafety,
+                        accentColor = Color(0xFFF06292),
+                        description = "Disease burden hex, life expectancy and pharma exports",
+                        metrics = listOf("$50B" to "Pharma", "71K" to "Hospitals", "540M" to "ABDM"),
+                        onClick = { onNavigate(Routes.HEALTHCARE) }
+                    )
+                }
+
+                // --- MARKETS & ASSETS ---
+                item { SectionGroupHeader("MARKETS & ASSETS") }
+
+                item {
+                    SectionCard(
+                        index = 14,
+                        title = "Real Estate",
+                        badge = "RERA",
+                        icon = Icons.Outlined.Home,
+                        accentColor = Color(0xFFFF8A65),
+                        description = "City price hex, rental yields and inventory state race",
+                        metrics = listOf("₹7,200" to "Index", "4.35L" to "Units", "6.5L" to "Unsold"),
+                        onClick = { onNavigate(Routes.REAL_ESTATE) }
+                    )
+                }
+
+                item {
+                    SectionCard(
+                        index = 15,
+                        title = "Tourism",
+                        badge = "INCREDIBLE",
+                        icon = Icons.Outlined.TravelExplore,
+                        accentColor = Color(0xFFFFD54F),
+                        description = "Visitor origin sankey, pilgrimage growth and hotel occupancy",
+                        metrics = listOf("9.2M" to "Foreign", "2.5B" to "Domestic", "$28B" to "Forex"),
+                        onClick = { onNavigate(Routes.TOURISM) }
+                    )
+                }
+
+                item {
+                    SectionCard(
+                        index = 16,
+                        title = "Space Tech",
+                        badge = "ISRO",
+                        icon = Icons.Outlined.Brightness7,
+                        accentColor = Color(0xFF9C27B0),
+                        description = "Launch race, satellite constellations and mission timelines",
+                        metrics = listOf("48/yr" to "Launches", "180+" to "Startups", "₹13K Cr" to "Budget"),
+                        onClick = { onNavigate(Routes.SPACE_TECH) }
+                    )
+                }
+
+                item {
+                    SectionCard(
+                        index = 17,
+                        title = "Geopolitical Risk",
+                        badge = "LIVE ALERT",
+                        icon = Icons.Outlined.Gavel,
+                        accentColor = Color(0xFFFF1744),
+                        description = "Threat pulse radar, trade dependency and risk heatmap",
+                        metrics = listOf("42" to "Risk", "7" to "Borders", "3" to "Conflicts"),
+                        onClick = { onNavigate(Routes.GEO_RISK) }
+                    )
+                }
+
+                item {
+                    SectionCard(
+                        index = 18,
+                        title = "Inequality",
+                        badge = "GINI",
+                        icon = Icons.Outlined.AlignVerticalBottom,
+                        accentColor = Color(0xFFE040FB),
+                        description = "Wealth distribution, Lorenz curve and poverty timelines",
+                        metrics = listOf("0.357" to "Gini", "22%" to "Top 1%", "3%" to "Bottom 50%"),
+                        onClick = { onNavigate(Routes.INEQUALITY) }
+                    )
+                }
+
+                // --- DEEP ANALYTICS ---
+                item { SectionGroupHeader("DEEP ANALYTICS") }
+
+                item {
+                    SectionCard(
+                        index = 19,
+                        title = "Labour Market",
+                        badge = "CMIE",
+                        icon = Icons.Outlined.Groups,
+                        accentColor = Color(0xFF80CBC4),
+                        description = "LFP rates, gender divide and youth unemployment trends",
+                        metrics = listOf("42.6%" to "LFP Rate", "21%" to "Formal", "7.2%" to "Wage Growth"),
+                        onClick = { onNavigate(Routes.LABOUR) }
+                    )
+                }
+
+                item {
+                    SectionCard(
+                        index = 20,
+                        title = "Logistics",
+                        badge = "PM GATI",
+                        icon = Icons.Outlined.LocalShipping,
+                        accentColor = Color(0xFFFFB74D),
+                        description = "Port traffic, cold chain and customs dwell timelines",
+                        metrics = listOf("3.44" to "LPI", "₹2,100C" to "Cold Chain", "12.3M" to "Port TEU"),
+                        onClick = { onNavigate(Routes.LOGISTICS) }
+                    )
+                }
+
+                item {
+                    SectionCard(
+                        index = 21,
+                        title = "Media Economy",
+                        badge = "OTT",
+                        icon = Icons.Outlined.Movie,
+                        accentColor = Color(0xFFFF4081),
+                        description = "Digital consumption, podcast growth and ad spend trends",
+                        metrics = listOf("550M" to "OTT Subs", "₹12K Cr" to "Box Office", "₹1.1L Cr" to "Ad Spend"),
+                        onClick = { onNavigate(Routes.MEDIA) }
+                    )
+                }
+
+                item {
+                    SectionCard(
+                        index = 22,
+                        title = "Natural Resources",
+                        badge = "CRZ",
+                        icon = Icons.Outlined.Water,
+                        accentColor = Color(0xFF4DD0E1),
+                        description = "Water table levels, mineral types and resource risk",
+                        metrics = listOf("High" to "Stress", "95" to "Minerals", "$7B" to "Fisheries"),
+                        onClick = { onNavigate(Routes.NATURAL_RESOURCES) }
+                    )
+                }
+
+                item {
+                    SectionCard(
+                        index = 23,
+                        title = "Soft Power",
+                        badge = "BRAND INDIA",
+                        icon = Icons.Outlined.FavoriteBorder,
+                        accentColor = Color(0xFFFFD700),
+                        description = "Nation brand, diaspora reach and linguistic influence",
+                        metrics = listOf("$2.6T" to "Brand Value", "32M" to "Diaspora", "300M" to "Practitioners"),
+                        onClick = { onNavigate(Routes.SOFT_POWER) }
+                    )
+                }
+
+                item { Spacer(modifier = Modifier.height(100.dp)) }
             }
         }
     }
 }
 
 @Composable
-fun HomeHeaderSection() {
-    val extendedColors = SciFiTheme.extendedColors
-    
-    Box(
+fun SectionGroupHeader(name: String) {
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(140.dp)
-            .background(
-                brush = Brush.linearGradient(
-                    listOf(extendedColors.primary.copy(0.15f), extendedColors.accent.copy(0.08f))
-                ),
-                shape = RoundedCornerShape(16.dp)
-            )
-            .border(1.dp, extendedColors.primary.copy(0.3f), RoundedCornerShape(16.dp))
-            .padding(16.dp)
+            .padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(modifier = Modifier.align(Alignment.TopStart)) {
-            Row(verticalAlignment = Alignment.Bottom) {
+        HorizontalDivider(modifier = Modifier.weight(1f), color = SciFiTheme.extendedColors.primary.copy(alpha = 0.2f))
+        Text(
+            text = name,
+            style = SciFiTheme.typography.SectionHead,
+            color = SciFiTheme.extendedColors.primary.copy(alpha = 0.5f),
+            letterSpacing = 0.15.sp,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+        HorizontalDivider(modifier = Modifier.weight(1f), color = SciFiTheme.extendedColors.primary.copy(alpha = 0.2f))
+    }
+}
+
+@Composable
+fun HomeHeaderSection() {
+    val extendedColors = SciFiTheme.extendedColors
+    Column(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "BHARATSIGHT",
+                        style = SciFiTheme.typography.HeroNumber.copy(fontSize = 28.sp),
+                        color = extendedColors.primary
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "2075",
+                        style = SciFiTheme.typography.HeroNumber.copy(fontSize = 18.sp),
+                        color = extendedColors.accent
+                    )
+                }
                 Text(
-                    text = "BHARATSIGHT",
-                    style = SciFiTheme.typography.HeroNumber.copy(fontSize = 22.sp),
-                    color = extendedColors.primary,
-                    letterSpacing = 0.08.sp
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "2075",
-                    style = SciFiTheme.typography.BodyMono.copy(fontSize = 14.sp),
-                    color = extendedColors.accent
+                    text = "INDIA ECONOMIC INTELLIGENCE PLATFORM",
+                    style = SciFiTheme.typography.MetricLabel,
+                    color = extendedColors.textSecondary.copy(alpha = 0.6f)
                 )
             }
-            Text(
-                text = "INDIA ECONOMIC INTELLIGENCE PLATFORM",
-                style = SciFiTheme.typography.ChartCaption.copy(fontSize = 9.sp),
-                color = extendedColors.primary.copy(0.6f),
-                letterSpacing = 0.15.sp
+            
+            val infiniteTransition = rememberInfiniteTransition(label = "RupeeRotation")
+            val rotation by infiniteTransition.animateFloat(
+                initialValue = 0f,
+                targetValue = 360f,
+                animationSpec = infiniteRepeatable(tween(10000, easing = LinearEasing)), label = "Rotation"
             )
             
-            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "₹",
+                fontSize = 54.sp,
+                color = extendedColors.primary,
+                modifier = Modifier.graphicsLayer { rotationY = rotation }
+            )
         }
-
-        // Rupee Symbol Animation
-        val rotationTransition = rememberInfiniteTransition(label = "RupeeRotation")
-        val rotation by rotationTransition.animateFloat(
-            initialValue = -5f,
-            targetValue = 5f,
-            animationSpec = infiniteRepeatable(tween(3000, easing = EaseInOutSine), RepeatMode.Reverse),
-            label = "rotation"
-        )
         
-        Text(
-            text = "₹",
-            style = SciFiTheme.typography.HeroNumber.copy(fontSize = 56.sp),
-            color = extendedColors.primary,
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .graphicsLayer { rotationZ = rotation }
-        )
-
-        Row(
-            modifier = Modifier.align(Alignment.BottomStart),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             KpiChip("GDP ▲12.4%")
             KpiChip("SENSEX 81,234")
             KpiChip("₹/$ 83.2")
@@ -287,15 +474,17 @@ fun HomeHeaderSection() {
 
 @Composable
 fun KpiChip(text: String) {
-    Box(
-        modifier = Modifier
-            .border(1.dp, SciFiTheme.extendedColors.primary.copy(0.4f), RoundedCornerShape(20.dp))
-            .padding(horizontal = 8.dp, vertical = 2.dp)
+    Surface(
+        color = SciFiTheme.extendedColors.surface.copy(alpha = 0.3f),
+        shape = RoundedCornerShape(16.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, SciFiTheme.extendedColors.primary.copy(alpha = 0.2f))
     ) {
         Text(
             text = text,
-            style = SciFiTheme.typography.ChartCaption.copy(fontSize = 10.sp),
-            color = SciFiTheme.extendedColors.textPrimary
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+            fontSize = 11.sp,
+            color = Color.White.copy(alpha = 0.8f),
+            style = SciFiTheme.typography.BodyMono
         )
     }
 }
@@ -304,117 +493,80 @@ fun KpiChip(text: String) {
 fun SectionCard(
     index: Int,
     title: String,
-    subtitle: String,
+    badge: String?,
     icon: ImageVector,
     accentColor: Color,
-    badge: String? = null,
-    metrics: List<Pair<String, String>> = emptyList(),
+    description: String,
+    metrics: List<Pair<String, String>>,
     onClick: () -> Unit
 ) {
-    val isAnimEnabled = true 
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
+    val extendedColors = SciFiTheme.extendedColors
     
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.97f else 1f,
-        animationSpec = spring(stiffness = 400f),
-        label = "PressScale"
-    )
-
-    var visible by remember { mutableStateOf(!isAnimEnabled) }
-    LaunchedEffect(Unit) {
-        if (isAnimEnabled) {
-            delay(index * 80L)
-            visible = true
-        }
-    }
-
+    // Animation logic
+    var visible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { visible = true }
+    
     AnimatedVisibility(
         visible = visible,
-        enter = slideInVertically { 30.dp.value.toInt() } + fadeIn(tween(400)),
-        modifier = Modifier.scale(scale)
+        enter = slideInHorizontally(animationSpec = tween(400, delayMillis = index * 100)) + fadeIn()
     ) {
-        Surface(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(interactionSource = interactionSource, indication = null) { onClick() }
-                .border(1.dp, accentColor.copy(0.35f), RoundedCornerShape(16.dp)),
-            shape = RoundedCornerShape(16.dp),
-            color = SciFiTheme.extendedColors.surface
+                .clip(RoundedCornerShape(16.dp))
+                .background(Color(0xFF0E0E1A))
+                .border(1.dp, Brush.linearGradient(listOf(accentColor.copy(alpha = 0.4f), Color.Transparent)), RoundedCornerShape(16.dp))
+                .clickable { onClick() }
+                .drawBehind {
+                    drawRect(Brush.verticalGradient(listOf(accentColor.copy(alpha = 0.05f), Color.Transparent), endY = 40f))
+                }
+                .padding(16.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.linearGradient(
-                            listOf(accentColor.copy(0.06f), Color.Transparent),
-                            start = androidx.compose.ui.geometry.Offset(0f, 0f),
-                            end = androidx.compose.ui.geometry.Offset(1000f, 1000f)
-                        )
-                    )
-            ) {
-                Row(modifier = Modifier.fillMaxHeight()) {
-                    Box(
-                        modifier = Modifier
-                            .width(3.dp)
-                            .fillMaxHeight()
-                            .background(accentColor)
-                    )
-                    
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(icon, contentDescription = null, tint = accentColor, modifier = Modifier.size(22.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = title, style = SciFiTheme.typography.BodyMono.copy(fontWeight = FontWeight.SemiBold, fontSize = 14.sp), color = Color.White)
-                            
-                            badge?.let {
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Box(
-                                    modifier = Modifier
-                                        .border(1.dp, accentColor.copy(0.7f), RoundedCornerShape(4.dp))
-                                        .background(accentColor.copy(0.12f))
-                                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                                ) {
-                                    Text(text = it, color = accentColor, fontSize = 8.sp, fontWeight = FontWeight.Bold)
-                                }
-                            }
-                        }
-                        
-                        Text(
-                            text = subtitle,
-                            style = SciFiTheme.typography.ChartCaption.copy(fontSize = 11.sp),
-                            color = SciFiTheme.extendedColors.textPrimary.copy(0.6f),
-                            modifier = Modifier.padding(top = 4.dp),
-                            maxLines = 2
-                        )
-                        
-                        if (metrics.isNotEmpty()) {
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                metrics.forEachIndexed { i, metric ->
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text(text = metric.second, style = SciFiTheme.typography.BodyMono.copy(fontWeight = FontWeight.Bold, fontSize = 13.sp), color = accentColor)
-                                        Text(text = metric.first, style = SciFiTheme.typography.ChartCaption.copy(fontSize = 9.sp), color = Color.White.copy(0.5f))
-                                    }
-                                    if (i < metrics.size - 1) {
-                                        Box(modifier = Modifier.width(1.dp).height(20.dp).background(Color.White.copy(0.1f)))
-                                    }
-                                }
-                            }
-                        }
-                        
-                        Spacer(modifier = Modifier.height(16.dp))
-                        
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(text = "EXPLORE →", style = SciFiTheme.typography.ChartCaption.copy(fontWeight = FontWeight.Bold, fontSize = 10.sp), color = accentColor)
-                            Spacer(modifier = Modifier.weight(1f))
-                            Text(text = "Updated 2 min ago", style = SciFiTheme.typography.ChartCaption.copy(fontSize = 9.sp), color = Color.White.copy(0.4f))
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(icon, contentDescription = null, tint = accentColor, modifier = Modifier.size(24.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(title, style = SciFiTheme.typography.SectionHead, color = Color.White)
+                    if (badge != null) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Surface(
+                            color = accentColor.copy(alpha = 0.15f),
+                            shape = RoundedCornerShape(4.dp),
+                            border = androidx.compose.foundation.BorderStroke(0.5.dp, accentColor.copy(alpha = 0.5f))
+                        ) {
+                            Text(badge, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), fontSize = 8.sp, color = accentColor)
                         }
                     }
                 }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(description, fontSize = 12.sp, color = extendedColors.textSecondary)
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    metrics.forEach { (value, label) ->
+                        Column {
+                            Text(value, style = SciFiTheme.typography.BodyMono, color = accentColor, fontWeight = FontWeight.Bold)
+                            Text(label.uppercase(), style = SciFiTheme.typography.ChartCaption, color = extendedColors.textDisabled)
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                Text("EXPLORE →", fontSize = 11.sp, color = accentColor, fontWeight = FontWeight.Bold)
+                
+                Text(
+                    "Updated 2 min ago",
+                    modifier = Modifier.align(Alignment.End),
+                    fontSize = 9.sp,
+                    color = extendedColors.textDisabled.copy(alpha = 0.5f)
+                )
             }
         }
     }

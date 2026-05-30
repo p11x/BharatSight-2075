@@ -8,16 +8,19 @@ import com.bharatsight2075.ui.visualization.charts.TimelineEvent
 import kotlin.random.Random
 
 object MockData {
+    fun generateHeroStats(section: String): List<Pair<String, String>> {
+        return when(section) {
+            "agriculture" -> listOf("Crops" to "23", "States" to "28", "MSP" to "₹2,183")
+            "banking" -> listOf("Banks" to "156", "NPA" to "3.9%", "CRAR" to "16.8%")
+            "energy" -> listOf("Capacity" to "950GW", "Renewable" to "46%", "Deficit" to "0.4%")
+            "smart_cities" -> listOf("Cities" to "100", "NH km" to "1.46L", "Metro km" to "945")
+            else -> listOf("Metric" to "42", "Index" to "88%", "Delta" to "▲ 5.2%")
+        }
+    }
+
     val agricultureHeroStats = listOf("Crops" to "23", "States" to "28", "MSP" to "₹2,183")
     val bankingHeroStats = listOf("Banks" to "156", "NPA" to "3.9%", "CRAR" to "16.8%")
     val energyHeroStats = listOf("Capacity" to "950GW", "Renewable" to "46%", "Deficit" to "0.4%")
-    val smartCitiesHeroStats = listOf("Cities" to "100", "NH km" to "1.46L", "Metro km" to "945")
-    val startupHeroStats = listOf("Startups" to "1.2L", "Unicorns" to "113", "Funding" to "$42B")
-    val defenceHeroStats = listOf("Budget" to "₹6.2L Cr", "Export" to "$2.5B", "HAL Ord" to "350+")
-    val climateHeroStats = listOf("CO₂" to "2.8GT", "Forest" to "24%", "NDC" to "45% int.")
-    val digitalHeroStats = listOf("UPI Txn" to "14B/mo", "Internet" to "850M", "e-Comm" to "$120B")
-    val educationHeroStats = listOf("GER" to "28.4%", "Skilled" to "51M/yr", "Inst" to "56K+")
-    val healthcareHeroStats = listOf("Pharma" to "$50B", "Hospitals" to "71K", "ABDM" to "540M")
 }
 
 object ChartMockData {
@@ -46,7 +49,7 @@ object ChartMockData {
             ChartType.RING_CLUSTER, ChartType.RING_ORBITAL -> List(3) {
                 RingData(Random.nextFloat() * 0.8f + 0.1f, "Metric", Color.Cyan)
             }
-            ChartType.TIMELINE, ChartType.SPIRAL_TIMELINE -> List(4) {
+            ChartType.TIMELINE -> List(4) {
                 TimelineEvent("20${25 + it * 5}", "Milestone $it")
             }
             else -> listOf(50f, 60f, 70f, 80f)

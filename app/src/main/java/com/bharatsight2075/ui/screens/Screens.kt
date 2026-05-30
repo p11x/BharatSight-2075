@@ -34,6 +34,28 @@ object Routes {
     const val MARKET = "market"
     const val STATES = "states"
     const val CHART_DETAIL = "chart_detail/{chartId}"
+    
+    // New Sectors
+    const val AGRICULTURE = "agriculture"
+    const val BANKING = "banking"
+    const val ENERGY = "energy"
+    const val SMART_CITIES = "smart_cities"
+    const val STARTUP = "startup"
+    const val DEFENCE = "defence"
+    const val CLIMATE = "climate"
+    const val DIGITAL_ECONOMY = "digital_economy"
+    const val EDUCATION = "education"
+    const val HEALTHCARE = "healthcare"
+    const val REAL_ESTATE = "real_estate"
+    const val TOURISM = "tourism"
+    const val SPACE_TECH = "space_tech"
+    const val GEO_RISK = "geo_risk"
+    const val INEQUALITY = "inequality"
+    const val LABOUR = "labour"
+    const val LOGISTICS = "logistics"
+    const val MEDIA = "media"
+    const val NATURAL_RESOURCES = "natural_resources"
+    const val SOFT_POWER = "soft_power"
 }
 
 @Composable
