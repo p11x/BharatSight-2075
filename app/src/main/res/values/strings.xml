@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">BharatSight 2075</string>
+    <string name="app_name_debug">BharatSight 2075 Debug</string>
+    <string name="title_prediction_engine">Prediction Engine</string>
+</resources>

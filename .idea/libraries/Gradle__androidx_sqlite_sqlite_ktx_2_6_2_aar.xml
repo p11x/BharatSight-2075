@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Gradle: androidx.sqlite:sqlite-ktx:2.6.2@aar" external-system-id="GRADLE">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/9.5.1/transforms/d490253112adf0a847ebf5b68d6af3a2/transformed/sqlite-ktx-2.6.2/jars/classes.jar!/" />
+      <root url="file://$USER_HOME$/.gradle/caches/9.5.1/transforms/d490253112adf0a847ebf5b68d6af3a2/transformed/sqlite-ktx-2.6.2/res" />
+      <root url="file://$USER_HOME$/.gradle/caches/9.5.1/transforms/d490253112adf0a847ebf5b68d6af3a2/transformed/sqlite-ktx-2.6.2/AndroidManifest.xml" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/androidx.sqlite/sqlite-ktx/2.6.2/4a19c32af772067528c688fde54f591728d025da/sqlite-ktx-2.6.2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

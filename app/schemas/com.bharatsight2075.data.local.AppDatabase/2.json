@@ -1,0 +1,205 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 2,
+    "identityHash": "3a7843d3cfc14aa62ac4394c05a59aea",
+    "entities": [
+      {
+        "tableName": "historical_economic_data",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`year` INTEGER NOT NULL, `gdp` REAL NOT NULL, `inflation` REAL NOT NULL, `fdi` REAL NOT NULL, `sectorAgri` REAL NOT NULL, `sectorMfg` REAL NOT NULL, `sectorSvc` REAL NOT NULL, `population` REAL NOT NULL, PRIMARY KEY(`year`))",
+        "fields": [
+          {
+            "fieldPath": "year",
+            "columnName": "year",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "gdp",
+            "columnName": "gdp",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "inflation",
+            "columnName": "inflation",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fdi",
+            "columnName": "fdi",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sectorAgri",
+            "columnName": "sectorAgri",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sectorMfg",
+            "columnName": "sectorMfg",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sectorSvc",
+            "columnName": "sectorSvc",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "population",
+            "columnName": "population",
+            "affinity": "REAL",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "year"
+          ]
+        }
+      },
+      {
+        "tableName": "predicted_economic_data",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`year` INTEGER NOT NULL, `gdp` REAL NOT NULL, `inflation` REAL NOT NULL, `fdi` REAL NOT NULL, `sectorAgri` REAL NOT NULL, `sectorMfg` REAL NOT NULL, `sectorSvc` REAL NOT NULL, `population` REAL NOT NULL, PRIMARY KEY(`year`))",
+        "fields": [
+          {
+            "fieldPath": "year",
+            "columnName": "year",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "gdp",
+            "columnName": "gdp",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "inflation",
+            "columnName": "inflation",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fdi",
+            "columnName": "fdi",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sectorAgri",
+            "columnName": "sectorAgri",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sectorMfg",
+            "columnName": "sectorMfg",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sectorSvc",
+            "columnName": "sectorSvc",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "population",
+            "columnName": "population",
+            "affinity": "REAL",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "year"
+          ]
+        }
+      },
+      {
+        "tableName": "states_economy",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`stateId` TEXT NOT NULL, `name` TEXT NOT NULL, `gsdp` REAL NOT NULL, `population` INTEGER NOT NULL, `literacyRate` REAL NOT NULL, `hdi` REAL NOT NULL, `unemployment` REAL NOT NULL, `dominantSector` TEXT NOT NULL, `fdiInflow` REAL NOT NULL, `growthRate` REAL NOT NULL, PRIMARY KEY(`stateId`))",
+        "fields": [
+          {
+            "fieldPath": "stateId",
+            "columnName": "stateId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "gsdp",
+            "columnName": "gsdp",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "population",
+            "columnName": "population",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "literacyRate",
+            "columnName": "literacyRate",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hdi",
+            "columnName": "hdi",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "unemployment",
+            "columnName": "unemployment",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dominantSector",
+            "columnName": "dominantSector",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fdiInflow",
+            "columnName": "fdiInflow",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "growthRate",
+            "columnName": "growthRate",
+            "affinity": "REAL",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "stateId"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3a7843d3cfc14aa62ac4394c05a59aea')"
+    ]
+  }
+}

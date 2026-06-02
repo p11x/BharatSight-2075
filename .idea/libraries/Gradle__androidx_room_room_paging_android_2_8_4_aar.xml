@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="Gradle: androidx.room:room-paging-android:2.8.4@aar" external-system-id="GRADLE">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/9.5.1/transforms/fa147c94e52723aa3e5ab5d59886bd7b/transformed/room-paging/jars/classes.jar!/" />
+      <root url="file://$USER_HOME$/.gradle/caches/9.5.1/transforms/fa147c94e52723aa3e5ab5d59886bd7b/transformed/room-paging/AndroidManifest.xml" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/androidx.room/room-paging-android/2.8.4/92f74a5690bbb7488f3572ea6346cd9966035516/room-paging-android-2.8.4-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

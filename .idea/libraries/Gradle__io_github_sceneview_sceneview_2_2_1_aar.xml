@@ -1,0 +1,14 @@
+<component name="libraryTable">
+  <library name="Gradle: io.github.sceneview:sceneview:2.2.1@aar" external-system-id="GRADLE">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/9.5.1/transforms/bed6335153aa11a1716b52e691074a1b/transformed/sceneview-2.2.1/jars/classes.jar!/" />
+      <root url="file://$USER_HOME$/.gradle/caches/9.5.1/transforms/bed6335153aa11a1716b52e691074a1b/transformed/sceneview-2.2.1/AndroidManifest.xml" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.github.sceneview/sceneview/2.2.1/33351b1075badb6e727356d2833f952b837a3cce/sceneview-2.2.1-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.github.sceneview/sceneview/2.2.1/9a8da00a71b87661b4b3d894f058f3770912fdb2/sceneview-2.2.1-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

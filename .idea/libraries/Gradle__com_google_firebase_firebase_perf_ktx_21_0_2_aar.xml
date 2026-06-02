@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="Gradle: com.google.firebase:firebase-perf-ktx:21.0.2@aar" external-system-id="GRADLE">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/9.5.1/transforms/55f6702a9282750acb7841bc236ceb74/transformed/firebase-perf-ktx-21.0.2/jars/classes.jar!/" />
+      <root url="file://$USER_HOME$/.gradle/caches/9.5.1/transforms/55f6702a9282750acb7841bc236ceb74/transformed/firebase-perf-ktx-21.0.2/AndroidManifest.xml" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.google.firebase/firebase-perf-ktx/21.0.2/8a07452ec440381f17deb4ecb85c42bfd37162fc/firebase-perf-ktx-21.0.2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
