@@ -1,31 +1,45 @@
 package com.bharatsight2075.ui.screens
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.bharatsight2075.ui.components.*
+import com.bharatsight2075.ui.components.BharatSightTopBar
+import com.bharatsight2075.ui.components.TopBarMode
 import com.bharatsight2075.ui.theme.SciFiTheme
 import com.bharatsight2075.ui.visualization.charts.*
 
 @Composable
 fun CompareScreen(
     navController: NavController,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    viewModel: CompareViewModel = hiltViewModel()
 ) {
+    val countries by viewModel.countries.collectAsStateWithLifecycle()
     val extendedColors = SciFiTheme.extendedColors
-    
+    val pagerState = rememberPagerState(pageCount = { 4 })
+
     Scaffold(
         topBar = {
             BharatSightTopBar(
                 mode = TopBarMode.Section(
                     title = "Global Economy Compare",
-                    badge = "LIVE",
-                    badgeColor = extendedColors.primary,
+                    badge = "2075 PROJ",
+                    badgeColor = extendedColors.accent,
                     onBackClick = onBack
                 )
             )
@@ -36,165 +50,135 @@ fun CompareScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            contentPadding = PaddingValues(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
+            // 1. Horizontal Pager for Bar Charts
             item {
-                DashCard(
-                    chartId = "compare_gdp",
-                    navController = navController,
-                    title = "WORLD GDP COMPARISON (\$T)"
-                ) {
-                    GradientBarChart(
-                        data = emptyList(),
-                        labels = listOf("IND", "USA", "CHN", "DEU", "JPN", "GBR"),
-                        modifier = Modifier.height(220.dp)
+                Column {
+                    Text(
+                        text = when(pagerState.currentPage) {
+                            0 -> "GDP PROJECTED ($ TRILLION)"
+                            1 -> "ANNUAL GROWTH RATE (%)"
+                            2 -> "INFLATION TARGET (%)"
+                            else -> "HUMAN DEVELOPMENT INDEX (HDI)"
+                        },
+                        style = SciFiTheme.typography.SectionHead,
+                        color = extendedColors.primary,
+                        modifier = Modifier.padding(bottom = 8.dp)
                     )
-                }
-            }
-
-            item {
-                DashCard(
-                    chartId = "compare_growth_scatter",
-                    navController = navController,
-                    title = "GROWTH vs INFLATION (G6)"
-                ) {
-                    ScatterWithTrendLine(
-                        data = emptyList(),
-                        modifier = Modifier.height(200.dp)
-                    )
-                }
-            }
-
-            item {
-                DashCard(
-                    chartId = "compare_radar",
-                    navController = navController,
-                    title = "GLOBAL MACRO PERFORMANCE"
-                ) {
-                    RadarPolygonChart(
-                        data = emptyList(),
-                        labels = emptyList(),
-                        modifier = Modifier.height(300.dp)
-                    )
-                }
-            }
-
-            item {
-                DashCard(
-                    chartId = "compare_inflation_mirror",
-                    navController = navController,
-                    title = "GROWTH vs INFLATION MIRROR"
-                ) {
-                    MirrorBarChart(
-                        data = emptyList(),
-                        modifier = Modifier.height(220.dp)
-                    )
-                }
-            }
-
-            item {
-                DashCard(
-                    chartId = "compare_hdi_rings",
-                    navController = navController,
-                    title = "HDI PEER CONCENTRIC RINGS"
-                ) {
-                    RingProgressCluster(
-                        rings = emptyList(),
-                        centerStat = "0.7",
-                        modifier = Modifier.height(200.dp)
-                    )
-                }
-            }
-
-            item {
-                DashCard(
-                    chartId = "compare_fx_polar",
-                    navController = navController,
-                    title = "FX RESERVE COMPOSITION"
-                ) {
-                    PolarAreaChart(
-                        data = emptyList(),
-                        brushes = emptyList(),
-                        modifier = Modifier.height(260.dp)
-                    )
-                }
-            }
-
-            item {
-                DashCard(
-                    chartId = "compare_mkt_cap_treemap",
-                    navController = navController,
-                    title = "STOCK EXCHANGE MARKET CAP"
-                ) {
-                    TreemapChart(
-                        weights = emptyList(),
-                        brushes = emptyList(),
-                        modifier = Modifier.height(300.dp)
-                    )
-                }
-            }
-
-            item {
-                TwoColumnRow {
-                    DashCard(
-                        chartId = "compare_comp_speedo",
-                        navController = navController,
-                        title = "COMPETITORS", 
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        SpeedometerGauge(value = 65.4f, max = 100f, label = "RANK INDEX", modifier = Modifier.height(180.dp))
+                    
+                    HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier
+                            .height(220.dp)
+                            .border(1.dp, Color.White.copy(alpha = 0.1f))
+                            .background(Color.Black.copy(alpha = 0.2f))
+                    ) { page ->
+                        val data = countries.map {
+                            when(page) {
+                                0 -> it.gdp
+                                1 -> it.growth
+                                2 -> it.inflation
+                                else -> it.hdi * 100f // Scale for bar chart visibility
+                            }
+                        }
+                        GradientBarChart(
+                            data = data,
+                            labels = countries.map { it.name },
+                            modifier = Modifier.fillMaxSize().padding(16.dp)
+                        )
                     }
-                    DashCard(
-                        chartId = "compare_recovery_waterfall",
-                        navController = navController,
-                        title = "RECOVERY Δ", 
-                        modifier = Modifier.weight(1f)
+                    
+                    // Pager Indicator
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                        horizontalArrangement = Arrangement.Center
                     ) {
-                        WaterfallBarChart(
-                            data = emptyList(),
-                            modifier = Modifier.height(180.dp)
+                        repeat(4) { i ->
+                            Box(
+                                modifier = Modifier
+                                    .padding(horizontal = 4.dp)
+                                    .size(width = if (pagerState.currentPage == i) 16.dp else 6.dp, height = 4.dp)
+                                    .background(if (pagerState.currentPage == i) extendedColors.primary else Color.Gray)
+                            )
+                        }
+                    }
+                }
+            }
+
+            // 2. Radar Comparison
+            item {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.3f)),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
+                ) {
+                    Column(Modifier.padding(16.dp)) {
+                        Text("STRUCTURAL COMPARISON", style = SciFiTheme.typography.SectionHead, color = extendedColors.accent)
+                        Spacer(Modifier.height(16.dp))
+                        RadarPolygonChart(
+                            data = listOf(0.9f, 0.8f, 0.7f, 0.95f, 0.85f), // Composite mock
+                            labels = listOf("AGRI", "IND", "SERV", "DIGIT", "R&D"),
+                            modifier = Modifier.height(240.dp).fillMaxWidth()
                         )
                     }
                 }
             }
 
+            // 3. Metric Table
             item {
-                DashCard(
-                    chartId = "compare_export_venn",
-                    navController = navController,
-                    title = "PRODUCT CATEGORY OVERLAP"
-                ) {
-                    VennDiagramChart(modifier = Modifier.height(280.dp))
-                }
+                MetricTable(countries, extendedColors)
             }
 
-            item {
-                DashCard(
-                    chartId = "compare_g20_timeline",
-                    navController = navController,
-                    title = "G20 ECONOMIC SUMMIT MILSTONES"
-                ) {
-                    TimelineEventChart(
-                        events = emptyList(),
-                        modifier = Modifier.height(180.dp)
-                    )
-                }
-            }
-
-            item {
-                DashCard(
-                    chartId = "compare_sentiment_wave",
-                    navController = navController,
-                    title = "MARKET SENTIMENT COHERENCE"
-                ) {
-                    WaveformChart(
-                        modifier = Modifier.height(150.dp)
-                    )
-                }
-            }
-
-            item { Spacer(modifier = Modifier.height(100.dp)) }
+            item { Spacer(Modifier.height(100.dp)) }
         }
     }
+}
+
+@Composable
+private fun MetricTable(countries: List<CountryMetric>, colors: SciFiTheme.SciFiColors) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(1.dp, Color.White.copy(alpha = 0.1f))
+            .background(Color.Black.copy(alpha = 0.2f))
+    ) {
+        // Header
+        Row(
+            modifier = Modifier.background(colors.primary.copy(alpha = 0.1f)).padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("METRIC", modifier = Modifier.weight(1.5f), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = colors.primary)
+            countries.forEach { 
+                Text(it.name.take(3), modifier = Modifier.weight(1f), fontSize = 9.sp, fontWeight = FontWeight.Bold, color = if (it.isPrimary) colors.primary else Color.Gray)
+            }
+        }
+
+        // Rows
+        MetricRow("GDP ($ T)", countries.map { it.gdp.toString() }, colors)
+        MetricRow("GROWTH %", countries.map { it.growth.toString() }, colors)
+        MetricRow("INFLTN %", countries.map { it.inflation.toString() }, colors)
+        MetricRow("HDI INDEX", countries.map { it.hdi.toString() }, colors)
+    }
+}
+
+@Composable
+private fun MetricRow(label: String, values: List<String>, colors: SciFiTheme.SciFiColors) {
+    Row(
+        modifier = Modifier.padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(label, modifier = Modifier.weight(1.5f), fontSize = 10.sp, color = Color.LightGray)
+        values.forEachIndexed { i, value ->
+            val isIndia = i == 0 // Based on ViewModel list
+            Text(
+                text = value,
+                modifier = Modifier.weight(1f),
+                fontSize = 10.sp,
+                color = if (isIndia) colors.primary else Color.White,
+                fontWeight = if (isIndia) FontWeight.Bold else FontWeight.Normal
+            )
+        }
+    }
+    HorizontalDivider(color = Color.White.copy(alpha = 0.05f))
 }

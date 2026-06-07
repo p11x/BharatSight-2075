@@ -10,9 +10,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.bharatsight2075.ui.theme.RetroDarkColors
-import com.bharatsight2075.ui.visualization.radar.RadarDataSet
-import com.bharatsight2075.ui.visualization.radar.RadarSpiderChart
+import com.bharatsight2075.ui.theme.SciFiTheme // Changed theme import if needed, or keep RetroDarkColors if it exists
+import com.bharatsight2075.ui.visualization.charts.RadarDataSet
+import com.bharatsight2075.ui.visualization.charts.RadarPolygonChart
 
 @Immutable
 data class PortfolioSector(
@@ -23,10 +23,15 @@ data class PortfolioSector(
 
 @Composable
 fun PortfolioOverlapAnalyzer(portfolio: List<PortfolioSector>) {
+    val neonCyan = Color(0xFF00F5FF)
+    val neonMagenta = Color(0xFFFF00FF)
+    val neonOrange = Color(0xFFFF6B35)
+    val neonGreen = Color(0xFF00E676)
+
     Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
         Text(
             "PORTFOLIO MACRO ALIGNMENT",
-            color = RetroDarkColors.NeonCyan,
+            color = neonCyan,
             fontSize = 14.sp,
             fontFamily = FontFamily.Monospace,
             fontWeight = FontWeight.Bold
@@ -34,21 +39,19 @@ fun PortfolioOverlapAnalyzer(portfolio: List<PortfolioSector>) {
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        RadarSpiderChart(
+        RadarPolygonChart(
             modifier = Modifier.fillMaxWidth().height(250.dp),
             labels = portfolio.map { it.name },
             dataSets = listOf(
                 RadarDataSet(
-                    values = portfolio.map { it.allocation },
-                    maxValues = List(portfolio.size) { 1f },
                     label = "YOUR ALLOCATION",
-                    color = RetroDarkColors.NeonCyan
+                    values = portfolio.map { it.allocation },
+                    color = neonCyan
                 ),
                 RadarDataSet(
-                    values = portfolio.map { it.macroOutlook },
-                    maxValues = List(portfolio.size) { 1f },
                     label = "MACRO FORECAST",
-                    color = RetroDarkColors.NeonMagenta
+                    values = portfolio.map { it.macroOutlook },
+                    color = neonMagenta
                 )
             )
         )
@@ -58,7 +61,7 @@ fun PortfolioOverlapAnalyzer(portfolio: List<PortfolioSector>) {
         val totalExposure = portfolio.sumOf { (it.allocation * (1 - it.macroOutlook)).toDouble() }
         Text(
             text = "RISK EXPOSURE: ${(totalExposure * 100).toInt()}%",
-            color = if (totalExposure > 0.3) RetroDarkColors.NeonOrange else RetroDarkColors.NeonGreen,
+            color = if (totalExposure > 0.3) neonOrange else neonGreen,
             fontSize = 16.sp,
             fontFamily = FontFamily.Monospace,
             fontWeight = FontWeight.Bold

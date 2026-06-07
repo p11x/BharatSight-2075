@@ -5,30 +5,29 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.*
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.drawscope.*
 import androidx.compose.ui.unit.dp
 import com.bharatsight2075.ui.theme.SciFiTheme
 import com.bharatsight2075.ui.visualization.ChartMockData
 import com.bharatsight2075.ui.visualization.ChartType
-import com.bharatsight2075.ui.visualization.treemap.TreemapLayoutEngine
 
-/**
- * C16. TreemapChart
- */
 @Composable
 fun TreemapChart(
-    weights: List<Double>,
-    brushes: List<Brush>,
     modifier: Modifier = Modifier,
+    values: List<Double> = emptyList(),
+    data: List<Float> = emptyList(), // Added for compatibility
+    weights: List<Double> = emptyList(), // Added for compatibility
+    brushes: List<Brush> = emptyList(), // Added for compatibility
     chartHeight: androidx.compose.ui.unit.Dp = 220.dp,
-    animated: Boolean = true
+    primaryColor: Color = SciFiTheme.extendedColors.primary
 ) {
-    val safeWeights = weights.takeIf { it.isNotEmpty() } 
-        ?: remember { ChartMockData.generateMockData(ChartType.TREEMAP) as List<Double> }
+    @Suppress("UNCHECKED_CAST")
+    val safeValues = values.takeIf { it.isNotEmpty() } 
+        ?: data.map { it.toDouble() }.takeIf { it.isNotEmpty() }
+        ?: weights.takeIf { it.isNotEmpty() }
+        ?: (ChartMockData.generateMockData(ChartType.TREEMAP) as List<Double>)
     
     var triggered by remember { mutableStateOf(false) }
     val progress by animateFloatAsState(
@@ -37,46 +36,43 @@ fun TreemapChart(
         label = "TreemapAnim"
     )
     LaunchedEffect(Unit) { triggered = true }
-    
-    val currentProgress = if (animated) progress else 1f
-    val colors = SciFiTheme.extendedColors
 
-    Canvas(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(chartHeight)
-            .drawWithCache {
-                onDrawBehind {
-                    val rects = TreemapLayoutEngine.squarify(safeWeights, Rect(0f, 0f, size.width, size.height))
-                    
-                    rects.forEach { treemapRect ->
-                        val rect = treemapRect.rect
-                        val color = when(treemapRect.originalIndex % 3) {
-                            0 -> colors.primary
-                            1 -> colors.accent
-                            else -> Color(0xFF39FF14)
-                        }
-                        
-                        // Scale from center for animation
-                        val center = rect.center
-                        val animatedW = rect.width * currentProgress
-                        val animatedH = rect.height * currentProgress
-                        val animatedRect = Rect(center.x - animatedW/2, center.y - animatedH/2, center.x + animatedW/2, center.y + animatedH/2)
+    Canvas(modifier = modifier.fillMaxWidth().height(chartHeight)) {
+        val total = safeValues.sum().coerceAtLeast(0.001)
+        var currentX = 0f
 
-                        drawRect(
-                            color = color.copy(alpha = 0.8f),
-                            topLeft = animatedRect.topLeft,
-                            size = animatedRect.size
-                        )
-                        
-                        drawRect(
-                            color = Color.Black,
-                            topLeft = animatedRect.topLeft,
-                            size = animatedRect.size,
-                            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.dp.toPx())
-                        )
-                    }
-                }
+        safeValues.forEachIndexed { i, valDouble ->
+            val ratio = (valDouble / total).toFloat() * progress
+            val w = size.width * ratio
+            val h = size.height
+            
+            val color = primaryColor.copy(alpha = (0.2f + (i % 5) * 0.15f))
+            val brush = brushes.getOrNull(i)
+            
+            if (brush != null) {
+                drawRect(brush = brush, topLeft = Offset(currentX, 0f), size = Size(w.coerceAtLeast(4f), h))
+            } else {
+                drawRect(color = color, topLeft = Offset(currentX, 0f), size = Size(w.coerceAtLeast(4f), h))
             }
-    ) {}
+
+            drawRect(
+                color = primaryColor.copy(alpha = 0.5f),
+                topLeft = Offset(currentX, 0f),
+                size = Size(w.coerceAtLeast(4f), h),
+                style = Stroke(1.dp.toPx())
+            )
+            
+            // Add "circuit" lines for tech look
+            if (w > 20.dp.toPx()) {
+                drawLine(
+                    primaryColor.copy(alpha = 0.2f),
+                    Offset(currentX + 5.dp.toPx(), 10.dp.toPx()),
+                    Offset(currentX + 5.dp.toPx(), h - 10.dp.toPx()),
+                    strokeWidth = 1.dp.toPx()
+                )
+            }
+            
+            currentX += w
+        }
+    }
 }

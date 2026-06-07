@@ -10,80 +10,48 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
-import com.bharatsight2075.data.repositories.EconomicRepository
 import com.bharatsight2075.ui.components.*
 import com.bharatsight2075.ui.visualization.MockData
+import com.bharatsight2075.ui.visualization.SectionDefaultData
+import com.bharatsight2075.ui.visualization.ChartMockData
+import com.bharatsight2075.ui.visualization.ChartType
 import com.bharatsight2075.ui.visualization.charts.*
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class RealEstateViewModel @Inject constructor(repo: EconomicRepository) : ViewModel() {
-    data class RealEstateData(val heroStats: List<Pair<String, String>> = emptyList())
-    private val _data = MutableStateFlow(RealEstateData())
-    val sectionData = _data.asStateFlow()
-    init { viewModelScope.launch(Dispatchers.IO) {
-        _data.value = RealEstateData(heroStats = listOf("Index" to "₹7,200", "Launches" to "4.35L", "Unsold" to "6.5L"))
-    }}
+class RealEstateViewModel @Inject constructor() : ViewModel() {
+    private val _data = MutableStateFlow(SectionDefaultData(MockData.generateHeroStats("real_estate")))
+    val data: StateFlow<SectionDefaultData> = _data.asStateFlow()
 }
 
 @Composable
-fun RealEstateScreen(navController: NavController) {
-    val vm: RealEstateViewModel = hiltViewModel()
-    val data by vm.sectionData.collectAsStateWithLifecycle()
-    val primaryColor = Color(0xFFFF8A65)
-
+fun RealEstateScreen(
+    navController: NavController,
+    viewModel: RealEstateViewModel = hiltViewModel()
+) {
+    val uiState by viewModel.data.collectAsStateWithLifecycle()
     Scaffold(
-        topBar = {
-            BharatSightTopBar(
-                mode = TopBarMode.Section(
-                    title = "Real Estate",
-                    badge = "RERA",
-                    badgeColor = primaryColor,
-                    onBackClick = { navController.popBackStack() }
-                )
-            )
-        },
+        topBar = { BharatSightTopBar(TopBarMode.Section(title="Real Estate & Infra",
+            badge=null, onBackClick={ navController.popBackStack() })) },
         containerColor = Color(0xFF080810)
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            item { HeroStatsRow(chartId = "realestate_hero", navController, stats = data.heroStats) }
-
-            item {
-                DashCard(chartId = "realestate_housing_liquid", navController, "Affordable Housing Progress") {
-                    LiquidFillGauge(percent = 0.65f, primaryColor = primaryColor)
-                }
-            }
-
-            item {
-                DashCard(chartId = "realestate_inventory_race", navController, "Inventory Trends (State-wise)") {
-                    GradientBarChart(data = emptyList(), labels = emptyList())
-                }
-            }
-
-            item {
-                DashCard(chartId = "realestate_permit_spiral", navController, "Project Permit Timeline") {
-                    SpiralTimelineChart(events = emptyList(), primaryColor = primaryColor)
-                }
-            }
-
-            item {
-                DashCard(chartId = "realestate_reits_orbital", navController, "REITs Market Depth") {
-                    OrbitalDonutSystem(rings = emptyList())
-                }
-            }
-
-            item { Spacer(modifier = Modifier.height(100.dp)) }
+        LazyColumn(Modifier.padding(padding), contentPadding=PaddingValues(12.dp),
+            verticalArrangement=Arrangement.spacedBy(12.dp)) {
+            item { HeroStatsRow(chartId="real_estate_hero", navController, uiState.heroStats) }
+            item { DashCard(chartId="rera_funnel", navController, "HOUSING ABSORPTION", description = "Project application → approval → completion") {
+                GradientAreaChart(data=ChartMockData.forType(ChartType.AREA) as List<Float>,
+                    modifier=Modifier.fillMaxWidth().height(180.dp)) }}
+            item { TwoColumnRow {
+                DashCard(chartId="price_hex", navController, "PRICE INDEX", description = "Property price per sqft city hexagonal map", modifier=Modifier.weight(1f)) {
+                    SpeedometerGauge(value=0.72f, max=1.0f, label="GROWTH", modifier=Modifier.fillMaxWidth().height(180.dp)) }
+                DashCard(chartId="inventory_race", navController, "UNSOLD INVENTORY", description = "City-wise unsold inventory animated bar race", modifier=Modifier.weight(1f)) {
+                    RingProgressCluster(rings=ChartMockData.forType(ChartType.RING_CLUSTER) as List<RingData>, modifier=Modifier.fillMaxWidth().height(180.dp)) }
+            }}
         }
     }
 }

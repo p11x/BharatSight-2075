@@ -8,19 +8,35 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.bharatsight2075.ui.components.BharatSightTopBar
-import com.bharatsight2075.ui.components.DashCard
-import com.bharatsight2075.ui.components.TopBarMode
-import com.bharatsight2075.ui.components.TwoColumnRow
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.bharatsight2075.ui.components.*
 import com.bharatsight2075.ui.theme.SciFiTheme
+import com.bharatsight2075.ui.visualization.MockData
+import com.bharatsight2075.ui.visualization.SectionDefaultData
 import com.bharatsight2075.ui.visualization.charts.*
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import javax.inject.Inject
+
+@HiltViewModel
+class MacroOverviewViewModel @Inject constructor() : ViewModel() {
+    private val _data = MutableStateFlow(SectionDefaultData(MockData.generateHeroStats("macro_overview")))
+    val data: StateFlow<SectionDefaultData> = _data.asStateFlow()
+}
 
 @Composable
 fun MacroOverviewScreen(
     navController: NavController,
+    viewModel: MacroOverviewViewModel = hiltViewModel(),
     marketData: List<com.bharatsight2075.service.LiveMarketData> = emptyList(),
     onBack: () -> Unit
 ) {
+    val uiState by viewModel.data.collectAsStateWithLifecycle()
+
     Scaffold(
         topBar = {
             BharatSightTopBar(
@@ -42,25 +58,21 @@ fun MacroOverviewScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item {
-                DashCard(
-                    chartId = "macro_gdp_hero",
+                HeroStatsRow(
+                    chartId = "gdp_hero",
                     navController = navController,
-                    title = "Core Economic Indicator",
-                    showLiveDot = true
-                ) {
-                    GlowingNumberTicker(
-                        value = 37.00f,
-                        unit = "USD TRILLION",
-                        delta = "▲ 8.1% YoY"
-                    )
-                }
+                    stats = uiState.heroStats,
+                    description = "Live GDP, inflation & key national economic indicators"
+                )
             }
 
-            item {
+            item(key = "gdp_projection") {
                 DashCard(
-                    chartId = "macro_gdp_projection",
+                    chartId = "gdp_projection",
                     navController = navController,
-                    title = "GDP 50-YEAR PROJECTION"
+                    title = "GDP 50-YEAR PROJECTION",
+                    description = "50-year GDP trajectory from 2026 to 2075 under base scenario",
+                    cardIndex = 1
                 ) {
                     GradientAreaChart(
                         data = emptyList(), // Use mock
@@ -70,13 +82,15 @@ fun MacroOverviewScreen(
                 }
             }
 
-            item {
+            item(key = "stability_rings_hdi") {
                 TwoColumnRow {
                     DashCard(
-                        chartId = "macro_indicator_rings",
+                        chartId = "stability_rings",
                         navController = navController,
                         title = "STABILITY RINGS",
-                        modifier = Modifier.weight(1f)
+                        description = "Inflation, repo rate & fiscal deficit ring gauges",
+                        modifier = Modifier.weight(1f),
+                        cardIndex = 2
                     ) {
                         RingProgressCluster(
                             rings = emptyList(),
@@ -87,7 +101,8 @@ fun MacroOverviewScreen(
                         chartId = "macro_hdi_gauge",
                         navController = navController,
                         title = "HDI GAUGE",
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        cardIndex = 3
                     ) {
                         HalfDonutGauge(
                             value = 0.644f,
@@ -99,15 +114,16 @@ fun MacroOverviewScreen(
                 }
             }
 
-            item {
+            item(key = "sector_donut") {
                 DashCard(
-                    chartId = "macro_sector_donut",
+                    chartId = "sector_donut",
                     navController = navController,
-                    title = "SECTOR COMPOSITION"
+                    title = "SECTOR COMPOSITION",
+                    description = "Agriculture · Industry · Services share of GDP",
+                    cardIndex = 4
                 ) {
                     GradientDonutChart(
                         values = emptyList(),
-                        brushes = emptyList(),
                         label = "GVA SHARE",
                         modifier = Modifier.height(200.dp)
                     )
@@ -116,9 +132,11 @@ fun MacroOverviewScreen(
 
             item {
                 DashCard(
-                    chartId = "macro_growth_bar",
+                    chartId = "growth_bar",
                     navController = navController,
-                    title = "YOY GROWTH (2015-25)"
+                    title = "YOY GROWTH (2015-25)",
+                    description = "Year-on-year GDP growth rate 2010–2025",
+                    cardIndex = 5
                 ) {
                     GradientBarChart(
                         data = emptyList(),
@@ -130,9 +148,11 @@ fun MacroOverviewScreen(
 
             item {
                 DashCard(
-                    chartId = "macro_trade_mirror",
+                    chartId = "trade_mirror",
                     navController = navController,
-                    title = "TRADE BALANCE (MONTHLY)"
+                    title = "TRADE BALANCE (MONTHLY)",
+                    description = "Monthly exports vs imports — trade balance analysis",
+                    cardIndex = 6
                 ) {
                     MirrorBarChart(
                         data = emptyList(),
@@ -143,9 +163,11 @@ fun MacroOverviewScreen(
 
             item {
                 DashCard(
-                    chartId = "macro_inflation_multi",
+                    chartId = "inflation_lines",
                     navController = navController,
-                    title = "INFLATION VARIANCE (CPI/WPI)"
+                    title = "INFLATION VARIANCE (CPI/WPI)",
+                    description = "CPI, WPI and core inflation 24-month comparison",
+                    cardIndex = 7
                 ) {
                     MultiLineChart(
                         data = emptyList(),
@@ -158,10 +180,12 @@ fun MacroOverviewScreen(
             item {
                 TwoColumnRow {
                     DashCard(
-                        chartId = "macro_unemployment_speedo",
+                        chartId = "employment_gauge",
                         navController = navController,
                         title = "UNEMPLOYMENT",
-                        modifier = Modifier.weight(1f)
+                        description = "Unemployment rate on 0–15% speedometer scale",
+                        modifier = Modifier.weight(1f),
+                        cardIndex = 8
                     ) {
                         SpeedometerGauge(
                             value = 7.8f,
@@ -171,10 +195,12 @@ fun MacroOverviewScreen(
                         )
                     }
                     DashCard(
-                        chartId = "macro_credit_wave",
+                        chartId = "credit_wave",
                         navController = navController,
                         title = "CREDIT WAVE",
-                        modifier = Modifier.weight(1f)
+                        description = "Animated credit growth rate wave — banking sector",
+                        modifier = Modifier.weight(1f),
+                        cardIndex = 9
                     ) {
                         WaveformChart(
                             modifier = Modifier.height(180.dp)
@@ -185,9 +211,11 @@ fun MacroOverviewScreen(
 
             item {
                 DashCard(
-                    chartId = "macro_repo_candles",
+                    chartId = "repo_candle",
                     navController = navController,
-                    title = "REPO RATE FLUCTUATION"
+                    title = "REPO RATE FLUCTUATION",
+                    description = "RBI repo rate OHLC history — monetary policy timeline",
+                    cardIndex = 10
                 ) {
                     CandlestickChart(
                         data = emptyList(),
@@ -198,9 +226,11 @@ fun MacroOverviewScreen(
 
             item {
                 DashCard(
-                    chartId = "macro_rank_heatmap",
+                    chartId = "macro_heatmap",
                     navController = navController,
-                    title = "GLOBAL MACRO RANKING"
+                    title = "GLOBAL MACRO RANKING",
+                    description = "India vs G20 — 8 macro metrics performance matrix",
+                    cardIndex = 11
                 ) {
                     HeatmapGridChart(
                         data = emptyList(),
@@ -211,9 +241,11 @@ fun MacroOverviewScreen(
 
             item {
                 DashCard(
-                    chartId = "macro_remit_sankey",
+                    chartId = "remittance_sankey",
                     navController = navController,
-                    title = "REMITTANCE SOURCE FLOW"
+                    title = "REMITTANCE SOURCE FLOW",
+                    description = "Top 5 source countries → India remittance flow bands",
+                    cardIndex = 12
                 ) {
                     SankeyFlowChart(
                         nodes = emptyList(),
@@ -225,9 +257,11 @@ fun MacroOverviewScreen(
 
             item {
                 DashCard(
-                    chartId = "macro_money_stacked",
+                    chartId = "m3_stacked",
                     navController = navController,
-                    title = "M3 MONEY SUPPLY COMPONENTS"
+                    title = "M3 MONEY SUPPLY COMPONENTS",
+                    description = "M1 + M2 money supply components stacked over time",
+                    cardIndex = 13
                 ) {
                     StackedAreaChart(
                         data = emptyList(),
@@ -239,9 +273,11 @@ fun MacroOverviewScreen(
 
             item {
                 DashCard(
-                    chartId = "macro_recovery_bubbles",
+                    chartId = "bubble_sectors",
                     navController = navController,
-                    title = "SECTOR RECOVERY DYNAMICS"
+                    title = "SECTOR RECOVERY DYNAMICS",
+                    description = "Sectors: x=growth, y=GDP contribution, size=employment",
+                    cardIndex = 14
                 ) {
                     BubbleScatterChart(
                         data = emptyList(),
@@ -254,7 +290,8 @@ fun MacroOverviewScreen(
                 DashCard(
                     chartId = "macro_fiscal_progress",
                     navController = navController,
-                    title = "FISCAL REFORM PROGRESS"
+                    title = "FISCAL REFORM PROGRESS",
+                    cardIndex = 15
                 ) {
                     HorizontalProgressBars(
                         items = emptyList(),
@@ -267,7 +304,8 @@ fun MacroOverviewScreen(
                 DashCard(
                     chartId = "macro_sector_venn",
                     navController = navController,
-                    title = "SECTORAL SYNERGY MAP"
+                    title = "SECTORAL SYNERGY MAP",
+                    cardIndex = 16
                 ) {
                     VennDiagramChart(
                         modifier = Modifier.height(180.dp)
@@ -279,7 +317,8 @@ fun MacroOverviewScreen(
                 DashCard(
                     chartId = "macro_milestones_timeline",
                     navController = navController,
-                    title = "HISTORICAL MACRO MILESTONES"
+                    title = "HISTORICAL MACRO MILESTONES",
+                    cardIndex = 17
                 ) {
                     TimelineEventChart(
                         events = emptyList(),

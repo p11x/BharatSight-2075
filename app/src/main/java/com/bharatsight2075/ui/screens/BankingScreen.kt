@@ -10,92 +10,48 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
-import com.bharatsight2075.data.repositories.EconomicRepository
 import com.bharatsight2075.ui.components.*
-import com.bharatsight2075.ui.theme.GradPalette
 import com.bharatsight2075.ui.visualization.MockData
+import com.bharatsight2075.ui.visualization.SectionDefaultData
+import com.bharatsight2075.ui.visualization.ChartMockData
+import com.bharatsight2075.ui.visualization.ChartType
 import com.bharatsight2075.ui.visualization.charts.*
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class BankingViewModel @Inject constructor(repo: EconomicRepository) : ViewModel() {
-    data class BankingData(val heroStats: List<Pair<String, String>> = emptyList())
-    private val _data = MutableStateFlow(BankingData())
-    val sectionData = _data.asStateFlow()
-    init { viewModelScope.launch(Dispatchers.IO) {
-        _data.value = BankingData(heroStats = MockData.bankingHeroStats)
-    }}
+class BankingViewModel @Inject constructor() : ViewModel() {
+    private val _data = MutableStateFlow(SectionDefaultData(MockData.generateHeroStats("banking")))
+    val data: StateFlow<SectionDefaultData> = _data.asStateFlow()
 }
 
 @Composable
-fun BankingScreen(navController: NavController) {
-    val vm: BankingViewModel = hiltViewModel()
-    val data by vm.sectionData.collectAsStateWithLifecycle()
-    val primaryColor = Color(0xFF00B0FF)
-
+fun BankingScreen(
+    navController: NavController,
+    viewModel: BankingViewModel = hiltViewModel()
+) {
+    val uiState by viewModel.data.collectAsStateWithLifecycle()
     Scaffold(
-        topBar = {
-            BharatSightTopBar(
-                mode = TopBarMode.Section(
-                    title = "Banking & Finance",
-                    badge = "RBI",
-                    badgeColor = primaryColor,
-                    onBackClick = { navController.popBackStack() }
-                )
-            )
-        },
+        topBar = { BharatSightTopBar(TopBarMode.Section(title="Banking & Finance",
+            badge=null, onBackClick={ navController.popBackStack() })) },
         containerColor = Color(0xFF080810)
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            item { HeroStatsRow(chartId = "banking_hero", navController, stats = data.heroStats) }
-
-            item {
-                TwoColumnRow {
-                    DashCard(chartId = "banking_liquid_credit", navController, "Credit-to-GDP Pulse", modifier = Modifier.weight(1f)) {
-                        LiquidFillGauge(percent = 0.62f, primaryColor = primaryColor)
-                    }
-                    DashCard(chartId = "banking_crar_gauge", navController, "CRAR Gauge", modifier = Modifier.weight(1f)) {
-                        SpeedometerGauge(value = 16.8f, max = 25f, label = "CAPITAL ADQ")
-                    }
-                }
-            }
-
-            item {
-                DashCard(chartId = "banking_npa_trend", navController, "Gross NPA Trend (%)") {
-                    GradientAreaChart(data = emptyList(), strokeColor = Color(0xFFFF6B35))
-                }
-            }
-
-            item {
-                DashCard(chartId = "banking_portfolio_orbital", navController, "Loan Portfolio Rings") {
-                    OrbitalDonutSystem(rings = emptyList())
-                }
-            }
-
-            item {
-                DashCard(chartId = "banking_recovery_waterfall", navController, "IBC Resolution Waterfall") {
-                    WaterfallBarChart(data = emptyList())
-                }
-            }
-
-            item {
-                DashCard(chartId = "banking_digital_spiral", navController, "Digital Payment Milestones") {
-                    SpiralTimelineChart(events = emptyList(), primaryColor = primaryColor)
-                }
-            }
-
-            item { Spacer(modifier = Modifier.height(100.dp)) }
+        LazyColumn(Modifier.padding(padding), contentPadding=PaddingValues(12.dp),
+            verticalArrangement=Arrangement.spacedBy(12.dp)) {
+            item { HeroStatsRow(chartId="banking_hero", navController, uiState.heroStats) }
+            item { DashCard(chartId="credit_liquid", navController, "CREDIT GROWTH", description = "Bank credit-to-GDP ratio as animated liquid fill") {
+                GradientAreaChart(data=ChartMockData.forType(ChartType.AREA) as List<Float>,
+                    modifier=Modifier.fillMaxWidth().height(180.dp)) }}
+            item { TwoColumnRow {
+                DashCard(chartId="npa_area", navController, "NPA GAUGE", description = "Gross NPA percentage trend 2015–2025", modifier=Modifier.weight(1f)) {
+                    SpeedometerGauge(value=0.72f, max=1.0f, label="RATIO", modifier=Modifier.fillMaxWidth().height(180.dp)) }
+                DashCard(chartId="crar_gauge", navController, "CAPITAL ADEQUACY", description = "Capital Adequacy Ratio — green zone above 9%", modifier=Modifier.weight(1f)) {
+                    RingProgressCluster(rings=ChartMockData.forType(ChartType.RING_CLUSTER) as List<RingData>, modifier=Modifier.fillMaxWidth().height(180.dp)) }
+            }}
         }
     }
 }

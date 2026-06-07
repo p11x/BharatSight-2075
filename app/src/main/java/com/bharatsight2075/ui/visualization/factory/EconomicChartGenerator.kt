@@ -7,7 +7,6 @@ import androidx.compose.ui.unit.dp
 import com.bharatsight2075.ui.visualization.VisualizationData
 import com.bharatsight2075.ui.visualization.VisualizationData.*
 import com.bharatsight2075.ui.visualization.line.HolographicLineChart
-import com.bharatsight2075.ui.visualization.line.DataPoint
 import com.bharatsight2075.ui.visualization.bar.StackedIsometricBarChart
 import com.bharatsight2075.ui.visualization.bar.StackedBarData
 import com.bharatsight2075.ui.visualization.cluster.RadialProgressCluster
@@ -24,11 +23,11 @@ fun EconomicChartGenerator(
         is TimeSeries -> {
             HolographicLineChart(
                 modifier = modifier.fillMaxWidth().height(220.dp),
-                dataPoints = data.points.map { DataPoint(it.x, it.y) }
+                points = data.points.map { it.y }
             )
         }
         is Composition -> {
-            if (data.segments.size == 3) {
+            if (data.segments.size >= 2) {
                 StackedIsometricBarChart(
                     modifier = modifier.fillMaxWidth().height(250.dp),
                     data = listOf(
@@ -42,7 +41,7 @@ fun EconomicChartGenerator(
                 RadialProgressCluster(
                     label = "COMPOSITION",
                     value = data.segments.firstOrNull()?.let { it.value / (it.maxValue.takeIf { v -> v > 0 } ?: 1f) } ?: 0f,
-                    modifier = modifier.size(100.dp)
+                    modifier = modifier.height(180.dp)
                 )
             }
         }
@@ -52,7 +51,7 @@ fun EconomicChartGenerator(
         is Spatial -> {
             CernRadialNodeMap(
                 modifier = modifier,
-                nodeCount = data.coordinates.size
+                nodeCount = data.spatialPoints.size
             )
         }
     }

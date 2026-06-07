@@ -1,0 +1,48 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+  android:width="108dp" android:height="108dp"
+  android:viewportWidth="108" android:viewportHeight="108">
+  <!-- Outer hexagon -->
+  <path android:pathData="M54,10 L91,32 L91,76 L54,98 L17,76 L17,32 Z"
+    android:strokeColor="#00F5FF" android:strokeWidth="2.5"
+    android:fillColor="#0D0D1E" android:strokeAlpha="0.95"/>
+  <!-- Inner hex ring -->
+  <path android:pathData="M54,18 L85,36 L85,72 L54,90 L23,72 L23,36 Z"
+    android:strokeColor="#00F5FF" android:strokeWidth="0.8"
+    android:fillColor="@android:color/transparent" android:strokeAlpha="0.2"/>
+  <!-- Hex vertex tick marks (orange) -->
+  <path android:pathData="M54,10 L54,17 M91,32 L85,35.5 M91,76 L85,72.5 M54,98 L54,91 M17,76 L23,72.5 M17,32 L23,35.5"
+    android:strokeColor="#FF6B35" android:strokeWidth="2"
+    android:fillColor="@android:color/transparent" android:strokeAlpha="0.9"
+    android:strokeLineCap="round"/>
+  <!-- Eye outer lens -->
+  <path android:pathData="M20,54 C28,36 80,36 88,54 C80,72 28,72 20,54 Z"
+    android:strokeColor="#00F5FF" android:strokeWidth="1.8"
+    android:fillColor="#00F5FF" android:fillAlpha="0.07" android:strokeAlpha="0.75"/>
+  <!-- Eye iris -->
+  <path android:pathData="M54,54 m-14,0 a14,14 0 1,0 28,0 a14,14 0 1,0 -28,0"
+    android:strokeColor="#00F5FF" android:strokeWidth="1.5"
+    android:fillColor="#00F5FF" android:fillAlpha="0.12" android:strokeAlpha="0.6"/>
+  <!-- Rising chart line inside iris -->
+  <path android:pathData="M44,63 L50,52 L57,57 L64,44"
+    android:strokeColor="#FF6B35" android:strokeWidth="3"
+    android:fillColor="@android:color/transparent"
+    android:strokeLineCap="round" android:strokeLineJoin="round"/>
+  <!-- Orange tip dot -->
+  <path android:pathData="M64,44 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0"
+    android:fillColor="#FF6B35"/>
+  <!-- Start dot -->
+  <path android:pathData="M44,63 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0"
+    android:fillColor="#FF6B35" android:fillAlpha="0.6"/>
+  <!-- India arc hint below iris -->
+  <path android:pathData="M40,66 Q54,75 68,66"
+    android:strokeColor="#00F5FF" android:strokeWidth="1.2"
+    android:fillColor="@android:color/transparent" android:strokeAlpha="0.4"/>
+  <!-- Hex corner accent dots -->
+  <path android:pathData="M54,10 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0
+    M91,32 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0
+    M91,76 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0
+    M54,98 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0
+    M17,76 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0
+    M17,32 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0"
+    android:fillColor="#FF6B35" android:fillAlpha="0.75"/>
+</vector>

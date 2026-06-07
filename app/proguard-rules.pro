@@ -1,27 +1,33 @@
 # TFLite
 -keep class org.tensorflow.** { *; }
-
-# SceneView / ARCore
--keep class com.google.ar.** { *; }
--keep class io.github.sceneview.** { *; }
--keep class com.google.android.filament.** { *; }
+-keep class org.tensorflow.lite.** { *; }
 
 # Hilt
 -keep class dagger.hilt.** { *; }
--keep class com.bharatsight2075.di.** { *; }
-
-# Moshi
--keep class com.squareup.moshi.** { *; }
--keepclassmembers class * {
-    @com.squareup.moshi.Json *;
-}
+-keep @dagger.hilt.android.lifecycle.HiltViewModel class * { *; }
 
 # Room
--keep class androidx.room.** { *; }
+-keep class * extends androidx.room.RoomDatabase
+-keep @androidx.room.Entity class *
+-keep @androidx.room.Dao interface *
+
+# Moshi / Retrofit
+-keep class com.squareup.moshi.** { *; }
+-keepclassmembers class ** { @com.squareup.moshi.FromJson *; @com.squareup.moshi.ToJson *; }
 
 # Coroutines
 -keepnames class kotlinx.coroutines.internal.MainDispatcherFactory {}
--keepnames class kotlinx.coroutines.CoroutineExceptionHandler {}
--keepclassmembernames class kotlinx.coroutines.android.HandlerContext {
-    val handler;
-}
+
+# SceneView / ARCore (if used)
+-keep class com.google.ar.** { *; }
+-keep class io.github.sceneview.** { *; }
+
+# App models
+-keep class com.bharatsight2075.data.** { *; }
+-keep class com.bharatsight2075.ui.maps.** { *; }
+
+# GeoJSON parsing
+-keep class org.json.** { *; }
+
+# Generative AI
+-keep class com.google.ai.** { *; }

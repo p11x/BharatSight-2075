@@ -1,19 +1,13 @@
 package com.bharatsight2075.ui.microinteraction
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.fadeIn
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.TextUnit
 import kotlinx.coroutines.delay
 
 private val CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".toList()
@@ -22,7 +16,10 @@ private val CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".toList()
 fun DecodingText(
     text: String,
     modifier: Modifier = Modifier,
-    typingSpeed: Long = 50L
+    typingSpeed: Long = 50L,
+    color: Color = Color.Unspecified,
+    fontSize: TextUnit = TextUnit.Unspecified,
+    style: TextStyle = LocalTextStyle.current
 ) {
     var displayedText by remember { mutableStateOf("") }
     var isDecoding by remember { mutableStateOf(true) }
@@ -31,7 +28,7 @@ fun DecodingText(
         isDecoding = true
         for (i in text.indices) {
             var charIndex = 0
-            while (charIndex < 10) {
+            while (charIndex < 5) { // Reduced cycles for faster feel
                 displayedText = text.take(i + 1).dropLast(1) + CHARS.random()
                 delay(20)
                 charIndex++
@@ -45,7 +42,9 @@ fun DecodingText(
     Text(
         text = displayedText,
         modifier = modifier,
-        color = if (isDecoding) Color(0xFF00E5FF) else Color(0xFFFF9500),
-        fontFamily = FontFamily.Monospace
+        color = if (color != Color.Unspecified) color else if (isDecoding) Color(0xFF00E5FF) else Color(0xFFFF9500),
+        fontSize = fontSize,
+        fontFamily = FontFamily.Monospace,
+        style = style
     )
 }

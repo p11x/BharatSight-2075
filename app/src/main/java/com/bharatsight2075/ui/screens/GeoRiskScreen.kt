@@ -10,79 +10,48 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
-import com.bharatsight2075.data.repositories.EconomicRepository
 import com.bharatsight2075.ui.components.*
+import com.bharatsight2075.ui.visualization.MockData
+import com.bharatsight2075.ui.visualization.SectionDefaultData
+import com.bharatsight2075.ui.visualization.ChartMockData
+import com.bharatsight2075.ui.visualization.ChartType
 import com.bharatsight2075.ui.visualization.charts.*
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class GeoRiskViewModel @Inject constructor(repo: EconomicRepository) : ViewModel() {
-    data class GeoRiskData(val heroStats: List<Pair<String, String>> = emptyList())
-    private val _data = MutableStateFlow(GeoRiskData())
-    val sectionData = _data.asStateFlow()
-    init { viewModelScope.launch(Dispatchers.IO) {
-        _data.value = GeoRiskData(heroStats = listOf("Risk Score" to "42", "Borders" to "7 nations", "Conflicts" to "3 active"))
-    }}
+class GeoRiskViewModel @Inject constructor() : ViewModel() {
+    private val _data = MutableStateFlow(SectionDefaultData(MockData.generateHeroStats("geo_risk")))
+    val data: StateFlow<SectionDefaultData> = _data.asStateFlow()
 }
 
 @Composable
-fun GeoRiskScreen(navController: NavController) {
-    val vm: GeoRiskViewModel = hiltViewModel()
-    val data by vm.sectionData.collectAsStateWithLifecycle()
-    val primaryColor = Color(0xFFFF1744)
-
+fun GeoRiskScreen(
+    navController: NavController,
+    viewModel: GeoRiskViewModel = hiltViewModel()
+) {
+    val uiState by viewModel.data.collectAsStateWithLifecycle()
     Scaffold(
-        topBar = {
-            BharatSightTopBar(
-                mode = TopBarMode.Section(
-                    title = "Geopolitical Risk",
-                    badge = "LIVE ALERT",
-                    badgeColor = primaryColor,
-                    onBackClick = { navController.popBackStack() }
-                )
-            )
-        },
+        topBar = { BharatSightTopBar(TopBarMode.Section(title="Geopolitical Risk",
+            badge=null, onBackClick={ navController.popBackStack() })) },
         containerColor = Color(0xFF080810)
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            item { HeroStatsRow(chartId = "georisk_hero", navController, stats = data.heroStats) }
-
-            item {
-                DashCard(chartId = "georisk_asset_liquid", navController, "Strategic Asset Liquid Index") {
-                    LiquidFillGauge(percent = 0.42f, primaryColor = primaryColor)
-                }
-            }
-
-            item {
-                DashCard(chartId = "georisk_conflict_spiral", navController, "Geopolitical Conflict Timeline") {
-                    SpiralTimelineChart(events = emptyList(), primaryColor = primaryColor)
-                }
-            }
-
-            item {
-                DashCard(chartId = "georisk_dependency_mirror", navController, "Trade Dependency Balance") {
-                    MirrorBarChart(data = emptyList())
-                }
-            }
-
-            item {
-                DashCard(chartId = "georisk_risk_heatmap", navController, "Country Risk Heatmap") {
-                    HeatmapGridChart(data = emptyList())
-                }
-            }
-
-            item { Spacer(modifier = Modifier.height(100.dp)) }
+        LazyColumn(Modifier.padding(padding), contentPadding=PaddingValues(12.dp),
+            verticalArrangement=Arrangement.spacedBy(12.dp)) {
+            item { HeroStatsRow(chartId="geo_risk_hero", navController, uiState.heroStats) }
+            item { DashCard(chartId="risk_heatmap", navController, "RISK SCORE TRAJECTORY", description = "Country risk score 12-month calendar heatmap") {
+                GradientAreaChart(data=ChartMockData.forType(ChartType.AREA) as List<Float>,
+                    modifier=Modifier.fillMaxWidth().height(180.dp)) }}
+            item { TwoColumnRow {
+                DashCard(chartId="border_candle", navController, "BORDER STABILITY", description = "Border tension index OHLC quarterly", modifier=Modifier.weight(1f)) {
+                    SpeedometerGauge(value=0.72f, max=1.0f, label="INDEX", modifier=Modifier.fillMaxWidth().height(180.dp)) }
+                DashCard(chartId="threat_pulse", navController, "CONFLICT MATRIX", description = "Active geopolitical threat blips by direction", modifier=Modifier.weight(1f)) {
+                    RingProgressCluster(rings=ChartMockData.forType(ChartType.RING_CLUSTER) as List<RingData>, modifier=Modifier.fillMaxWidth().height(180.dp)) }
+            }}
         }
     }
 }

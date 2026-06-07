@@ -1,7 +1,6 @@
 package com.bharatsight2075.ui.components
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -10,24 +9,26 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.OpenInFull
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.bharatsight2075.ui.screens.Routes
 import com.bharatsight2075.ui.theme.SciFiTheme
+import kotlinx.coroutines.delay
 
 @Composable
 fun DashCard(
@@ -35,16 +36,31 @@ fun DashCard(
     navController: NavController,
     title: String,
     modifier: Modifier = Modifier,
+    description: String = "",
     badge: String? = null,
     showLiveDot: Boolean = false,
+    cardIndex: Int = 0,
     content: @Composable BoxScope.() -> Unit
 ) {
     val extendedColors = SciFiTheme.extendedColors
-    val primary = extendedColors.primary
     val accent = extendedColors.accent
-    val isCyberpunk = SciFiTheme.current == SciFiTheme.Theme.Cyberpunk
     
-    val backgroundColor = if (isCyberpunk) Color(0xFF0E0E1A) else Color(0xFF060E1C)
+    var visible by remember { mutableStateOf(false) }
+    val staggerOffset by animateDpAsState(
+        targetValue = if (visible) 0.dp else 24.dp,
+        animationSpec = spring(stiffness = 150f, dampingRatio = 0.7f),
+        label = "staggerOffset"
+    )
+    val staggerAlpha by animateFloatAsState(
+        targetValue = if (visible) 1f else 0f,
+        animationSpec = tween(400),
+        label = "staggerAlpha"
+    )
+    
+    LaunchedEffect(Unit) {
+        delay(cardIndex * 60L)
+        visible = true
+    }
     
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -52,20 +68,28 @@ fun DashCard(
 
     Box(
         modifier = modifier
+            .offset(y = staggerOffset)
+            .alpha(staggerAlpha)
             .graphicsLayer { 
                 scaleX = scale
                 scaleY = scale 
             }
             .fillMaxWidth()
+            .shadow(
+                elevation = 8.dp,
+                shape = RoundedCornerShape(16.dp),
+                ambientColor = accent.copy(alpha = 0.15f),
+                spotColor = accent.copy(alpha = 0.15f)
+            )
             .clip(RoundedCornerShape(16.dp))
             .border(
                 width = 1.dp,
                 brush = Brush.linearGradient(
-                    listOf(primary.copy(alpha = 0.4f), accent.copy(alpha = 0.2f))
+                    listOf(accent.copy(alpha = 0.4f), accent.copy(alpha = 0.1f))
                 ),
                 shape = RoundedCornerShape(16.dp)
             )
-            .background(backgroundColor)
+            .background(Color(0xFF0E0E1A))
             .clickable(
                 interactionSource = interactionSource,
                 indication = null
@@ -73,11 +97,9 @@ fun DashCard(
                 navController.navigate(Routes.CHART_DETAIL.replace("{chartId}", chartId))
             }
             .drawBehind {
-                // Subtle top-edge glow
                 drawRect(
-                    brush = Brush.verticalGradient(
-                        listOf(primary.copy(alpha = 0.06f), Color.Transparent),
-                        endY = 40f
+                    brush = Brush.linearGradient(
+                        listOf(accent.copy(alpha = 0.05f), Color.Transparent)
                     )
                 )
             }
@@ -108,22 +130,25 @@ fun DashCard(
                     }
                 }
                 
-                // Tap hint icon
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Outlined.OpenInFull,
-                        contentDescription = "Expand",
-                        tint = primary.copy(alpha = 0.4f),
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Spacer(Modifier.width(3.dp))
-                    Text(
-                        text = "EXPAND",
-                        fontSize = 8.sp,
-                        color = primary.copy(alpha = 0.4f),
-                        style = SciFiTheme.typography.BodyMono
-                    )
-                }
+                // Expand hint in header
+                Icon(
+                    imageVector = Icons.Outlined.OpenInFull,
+                    contentDescription = "Expand",
+                    tint = accent.copy(alpha = 0.35f),
+                    modifier = Modifier.size(14.dp)
+                )
+            }
+            
+            if (description.isNotEmpty()) {
+                Text(
+                    text = description,
+                    fontSize = 10.sp,
+                    fontFamily = FontFamily.Monospace,
+                    color = SciFiTheme.colors.onSurface.copy(0.45f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(top = 2.dp, start = 26.dp)
+                )
             }
             
             Spacer(modifier = Modifier.height(12.dp))

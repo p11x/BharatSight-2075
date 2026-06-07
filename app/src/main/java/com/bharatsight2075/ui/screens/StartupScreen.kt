@@ -10,86 +10,48 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
-import com.bharatsight2075.data.repositories.EconomicRepository
 import com.bharatsight2075.ui.components.*
 import com.bharatsight2075.ui.visualization.MockData
+import com.bharatsight2075.ui.visualization.SectionDefaultData
+import com.bharatsight2075.ui.visualization.ChartMockData
+import com.bharatsight2075.ui.visualization.ChartType
 import com.bharatsight2075.ui.visualization.charts.*
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class StartupViewModel @Inject constructor(repo: EconomicRepository) : ViewModel() {
-    data class StartupData(val heroStats: List<Pair<String, String>> = emptyList())
-    private val _data = MutableStateFlow(StartupData())
-    val sectionData = _data.asStateFlow()
-    init { viewModelScope.launch(Dispatchers.IO) {
-        _data.value = StartupData(heroStats = MockData.startupHeroStats)
-    }}
+class StartupViewModel @Inject constructor() : ViewModel() {
+    private val _data = MutableStateFlow(SectionDefaultData(MockData.generateHeroStats("startups")))
+    val data: StateFlow<SectionDefaultData> = _data.asStateFlow()
 }
 
 @Composable
-fun StartupScreen(navController: NavController) {
-    val vm: StartupViewModel = hiltViewModel()
-    val data by vm.sectionData.collectAsStateWithLifecycle()
-    val primaryColor = Color(0xFF7C4DFF)
-
+fun StartupScreen(
+    navController: NavController,
+    viewModel: StartupViewModel = hiltViewModel()
+) {
+    val uiState by viewModel.data.collectAsStateWithLifecycle()
     Scaffold(
-        topBar = {
-            BharatSightTopBar(
-                mode = TopBarMode.Section(
-                    title = "Startup & Innovation",
-                    badge = "UNICORNS",
-                    badgeColor = primaryColor,
-                    onBackClick = { navController.popBackStack() }
-                )
-            )
-        },
+        topBar = { BharatSightTopBar(TopBarMode.Section(title="Startup Ecosystem",
+            badge=null, onBackClick={ navController.popBackStack() })) },
         containerColor = Color(0xFF080810)
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            item { HeroStatsRow(chartId = "startup_hero", navController, stats = data.heroStats) }
-
-            item {
-                DashCard(chartId = "startup_funding_race", navController, "Startup Funding by Sector") {
-                    // Using BarChart as Race fallback for now
-                    GradientBarChart(data = emptyList(), labels = emptyList())
-                }
-            }
-
-            item {
-                TwoColumnRow {
-                    DashCard(chartId = "startup_exit_waterfall", navController, "Exits Waterfall", modifier = Modifier.weight(1f)) {
-                        WaterfallBarChart(data = emptyList())
-                    }
-                    DashCard(chartId = "startup_innovation_radar", navController, "Innovation Radar", modifier = Modifier.weight(1f)) {
-                        RadarPolygonChart(data = emptyList(), labels = emptyList())
-                    }
-                }
-            }
-
-            item {
-                DashCard(chartId = "startup_patent_spiral", navController, "Patent Filing Timeline") {
-                    SpiralTimelineChart(events = emptyList(), primaryColor = primaryColor)
-                }
-            }
-
-            item {
-                DashCard(chartId = "startup_founder_venn", navController, "Founder Demographics") {
-                    VennDiagramChart()
-                }
-            }
-
-            item { Spacer(modifier = Modifier.height(100.dp)) }
+        LazyColumn(Modifier.padding(padding), contentPadding=PaddingValues(12.dp),
+            verticalArrangement=Arrangement.spacedBy(12.dp)) {
+            item { HeroStatsRow(chartId="startup_hero", navController, uiState.heroStats) }
+            item { DashCard(chartId="funding_race", navController, "FUNDING VELOCITY", description = "Startup funding by sector animated 2015–2025") {
+                GradientAreaChart(data=ChartMockData.forType(ChartType.AREA) as List<Float>,
+                    modifier=Modifier.fillMaxWidth().height(180.dp)) }}
+            item { TwoColumnRow {
+                DashCard(chartId="unicorn_bubble", navController, "UNICORN COUNT", description = "Unicorns by sector — parent/child bubble tree", modifier=Modifier.weight(1f)) {
+                    SpeedometerGauge(value=0.72f, max=1.0f, label="GROWTH", modifier=Modifier.fillMaxWidth().height(180.dp)) }
+                DashCard(chartId="deal_sankey", navController, "SECTOR SPREAD", description = "Seed → Series A → B → C → IPO funnel animated", modifier=Modifier.weight(1f)) {
+                    RingProgressCluster(rings=ChartMockData.forType(ChartType.RING_CLUSTER) as List<RingData>, modifier=Modifier.fillMaxWidth().height(180.dp)) }
+            }}
         }
     }
 }

@@ -5,82 +5,87 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.*
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.drawscope.*
 import androidx.compose.ui.unit.dp
 import com.bharatsight2075.ui.theme.SciFiTheme
 import com.bharatsight2075.ui.visualization.ChartMockData
 import com.bharatsight2075.ui.visualization.ChartType
-import com.bharatsight2075.ui.visualization.GradientFills
 
-/**
- * C19. WaterfallBarChart
- */
 @Composable
 fun WaterfallBarChart(
-    data: List<Float>,
     modifier: Modifier = Modifier,
+    data: List<Float> = emptyList(),
     chartHeight: androidx.compose.ui.unit.Dp = 180.dp,
-    animated: Boolean = true
+    primaryColor: Color = SciFiTheme.extendedColors.primary
 ) {
-    val safeData = data.takeIf { it.isNotEmpty() } 
-        ?: remember { ChartMockData.generateMockData(ChartType.WATERFALL).filterIsInstance<Float>() }
+    @Suppress("UNCHECKED_CAST")
+    val safeData = data.takeIf { it.isNotEmpty() } ?: ChartMockData.generateMockData(ChartType.WATERFALL) as List<Float>
     
     var triggered by remember { mutableStateOf(false) }
     val progress by animateFloatAsState(
         targetValue = if (triggered) 1f else 0f,
-        animationSpec = tween(1200, easing = EaseOutCubic),
-        label = "WaterfallAnim"
+        animationSpec = tween(durationMillis = 1200, easing = EaseOutCubic),
+        label = "chartProgress"
+    )
+    val glowPulse by rememberInfiniteTransition(label = "glow").animateFloat(
+        initialValue = 0.5f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(tween(2000, easing = EaseInOutSine), RepeatMode.Reverse),
+        label = "gp"
     )
     LaunchedEffect(Unit) { triggered = true }
-    
-    val currentProgress = if (animated) progress else 1f
+
+    // Staggered progress for each bar
+    val barProgresses = safeData.mapIndexed { index, _ ->
+        val animatable = remember { Animatable(0f) }
+        LaunchedEffect(triggered) {
+            if (triggered) {
+                kotlinx.coroutines.delay(index * 60L)
+                animatable.animateTo(1f, tween(800, easing = EaseOutCubic))
+            }
+        }
+        animatable
+    }
 
     Canvas(modifier = modifier.fillMaxWidth().height(chartHeight)) {
-        val count = safeData.size.coerceAtLeast(1)
-        val totalGap = size.width * 0.3f
-        val barWidth = (size.width - totalGap) / count
-        val gap = totalGap / (count + 1)
+        val count = safeData.size
+        val barWidth = (size.width / count.coerceAtLeast(1) * 0.6f).coerceAtLeast(4f)
+        val gap = size.width / count.coerceAtLeast(1) * 0.4f
         
-        // Calculate running totals
-        val runningTotals = FloatArray(count + 1)
-        for (i in 0 until count) {
-            runningTotals[i + 1] = runningTotals[i] + safeData[i]
-        }
+        var currentSum = 0f
+        val maxAbsSum = safeData.scan(0f) { acc, f -> acc + f }.map { Math.abs(it) }.maxOrNull()?.coerceAtLeast(1f) ?: 1f
+        val scale = (size.height / 2) / maxAbsSum
         
-        val maxVal = runningTotals.maxOf { Math.abs(it) }.coerceAtLeast(0.001f)
-        val centerY = size.height / 2
-        
-        runningTotals.drop(1).forEachIndexed { i, total ->
-            val prevTotal = runningTotals[i]
-            val x = gap + i * (barWidth + gap)
+        safeData.forEachIndexed { i, value ->
+            val barProgress = barProgresses.getOrNull(i)?.value ?: 0f
+            val startY = size.height / 2 - (currentSum * scale)
+            val endY = size.height / 2 - ((currentSum + value) * scale)
+            val h = Math.abs(endY - startY).coerceAtLeast(2f) * barProgress
+            val top = minOf(startY, endY)
             
-            val yPrev = centerY - (prevTotal / maxVal) * (size.height / 2)
-            val yCurr = centerY - (total / maxVal) * (size.height / 2)
+            val x = i * (barWidth + gap) + gap / 2
+            val color = if (value >= 0) Color(0xFF00E676) else Color(0xFFFF5252)
             
-            val isPositive = safeData[i] >= 0
-            val color = if (isPositive) Color(0xFF00E676) else Color(0xFFFF5252)
+            drawRect(color.copy(alpha = 0.3f), Offset(x, top), Size(barWidth, h))
             
-            val barHeight = Math.abs(yPrev - yCurr) * currentProgress
-            val barTop = if (isPositive) yCurr else yPrev
-            
+            // Double-pass glow
             drawRect(
-                brush = GradientFills.barFill(color, color.copy(alpha = 0.4f), barTop, barTop + barHeight),
-                topLeft = Offset(x, barTop),
-                size = Size(barWidth, barHeight)
+                color = color.copy(alpha = 0.2f * glowPulse),
+                topLeft = Offset(x, top),
+                size = Size(barWidth, h),
+                style = Stroke(width = 1.dp.toPx() * 3.5f)
             )
+            drawRect(color, Offset(x, top), Size(barWidth, h), style = Stroke(1.dp.toPx()))
             
-            // Connector
+            // Connecting dashed line
             if (i > 0) {
-                drawLine(
-                    color = Color.White.copy(alpha = 0.3f),
-                    start = Offset(x - gap, yPrev),
-                    end = Offset(x, yPrev),
-                    strokeWidth = 1.dp.toPx(),
-                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f))
-                )
+                val prevX = (i - 1) * (barWidth + gap) + gap / 2 + barWidth
+                drawLine(primaryColor.copy(alpha = 0.2f * barProgress), Offset(prevX, startY), Offset(x, startY), strokeWidth = 1.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(5f, 5f)))
             }
+            
+            currentSum += value
         }
     }
 }

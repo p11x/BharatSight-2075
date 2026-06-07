@@ -13,6 +13,8 @@ import androidx.navigation.NavController
 import com.bharatsight2075.ui.components.*
 import com.bharatsight2075.ui.theme.GradPalette
 import com.bharatsight2075.ui.theme.SciFiTheme
+import com.bharatsight2075.ui.visualization.MockData
+import com.bharatsight2075.ui.visualization.SectionDefaultData
 import com.bharatsight2075.ui.visualization.charts.*
 
 @Composable
@@ -24,6 +26,7 @@ fun Forecaster2075Screen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val forecastState = state as? ForecastUiState ?: ForecastUiState()
     val extendedColors = SciFiTheme.extendedColors
+    val heroStats = MockData.generateHeroStats("forecaster")
 
     Scaffold(
         topBar = {
@@ -46,10 +49,18 @@ fun Forecaster2075Screen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item {
-                DashCard(
-                    chartId = "forecast_trajectory",
+                HeroStatsRow(
+                    chartId = "forecast_hero",
                     navController = navController,
-                    title = "LIVE SCENARIO PROJECTION", 
+                    stats = heroStats
+                )
+            }
+            item {
+                DashCard(
+                    chartId = "trajectory_multi",
+                    navController = navController,
+                    title = "LIVE SCENARIO PROJECTION",
+                    description = "5 policy scenarios — GDP trajectory 2026–2075",
                     showLiveDot = true
                 ) {
                     MultiLineChart(
@@ -66,9 +77,10 @@ fun Forecaster2075Screen(
 
             item {
                 DashCard(
-                    chartId = "forecast_variance",
+                    chartId = "confidence_bands",
                     navController = navController,
-                    title = "STATISTICAL VARIANCE (P10-P90)"
+                    title = "STATISTICAL VARIANCE (P10-P90)",
+                    description = "P10–P90 Monte Carlo confidence interval around median"
                 ) {
                     GradientAreaChart(
                         data = forecastState.predictedGdp,
@@ -80,9 +92,10 @@ fun Forecaster2075Screen(
 
             item {
                 DashCard(
-                    chartId = "forecast_impact",
+                    chartId = "policy_radar",
                     navController = navController,
-                    title = "POLICY CONFIGURATION IMPACT"
+                    title = "POLICY CONFIGURATION IMPACT",
+                    description = "4 policy axes: tax, infra, education, foreign policy"
                 ) {
                     RadarPolygonChart(
                         data = listOf(
@@ -114,17 +127,19 @@ fun Forecaster2075Screen(
             item {
                 TwoColumnRow {
                     DashCard(
-                        chartId = "forecast_hdi",
+                        chartId = "hdi_speedometer",
                         navController = navController,
-                        title = "HDI SPEEDO", 
+                        title = "HDI SPEEDO",
+                        description = "Human Development Index projected to 2075",
                         modifier = Modifier.weight(1f)
                     ) {
                         SpeedometerGauge(value = 0.85f, max = 1f, label = "2075 INDEX", modifier = Modifier.height(180.dp))
                     }
                     DashCard(
-                        chartId = "forecast_gini",
+                        chartId = "gini_gauge",
                         navController = navController,
-                        title = "GINI DONUT", 
+                        title = "GINI DONUT",
+                        description = "Gini coefficient trajectory — inequality forecast",
                         modifier = Modifier.weight(1f)
                     ) {
                         HalfDonutGauge(value = 0.32f, max = 1f, label = "COEFFICIENT", modifier = Modifier.height(180.dp))
@@ -134,9 +149,10 @@ fun Forecaster2075Screen(
 
             item {
                 DashCard(
-                    chartId = "forecast_composition",
+                    chartId = "sector_shift",
                     navController = navController,
-                    title = "GDP COMPOSITION SHIFT (2026-75)"
+                    title = "GDP COMPOSITION SHIFT (2026-75)",
+                    description = "Agri/Industry/Services % of GDP stacked 2026–2075"
                 ) {
                     StackedAreaChart(
                         data = emptyList(),
@@ -202,9 +218,10 @@ fun Forecaster2075Screen(
 
             item {
                 DashCard(
-                    chartId = "forecast_preset_rings",
+                    chartId = "preset_rings",
                     navController = navController,
-                    title = "POLICY PRESET SCORECARD"
+                    title = "POLICY PRESET SCORECARD",
+                    description = "Balanced vs High Growth vs Welfare Focus policy rings"
                 ) {
                     RingProgressCluster(
                         rings = emptyList(),
@@ -216,9 +233,10 @@ fun Forecaster2075Screen(
 
             item {
                 DashCard(
-                    chartId = "forecast_milestones",
+                    chartId = "milestones",
                     navController = navController,
-                    title = "PROJECTED ECONOMIC MILESTONES"
+                    title = "PROJECTED ECONOMIC MILESTONES",
+                    description = "Key projected economic milestones 2030–2075 timeline"
                 ) {
                     TimelineEventChart(
                         events = emptyList(),

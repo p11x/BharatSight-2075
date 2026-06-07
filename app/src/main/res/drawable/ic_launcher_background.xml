@@ -1,0 +1,19 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+  android:width="108dp" android:height="108dp"
+  android:viewportWidth="108" android:viewportHeight="108">
+  <!-- Deep dark base -->
+  <path android:pathData="M0,0 L108,0 L108,108 L0,108 Z" android:fillColor="#0A0A1A"/>
+  <!-- Subtle grid -->
+  <path android:pathData="M0,27 L108,27 M0,54 L108,54 M0,81 L108,81 M27,0 L27,108 M54,0 L54,108 M81,0 L81,108"
+    android:strokeColor="#00F5FF" android:strokeWidth="0.4"
+    android:fillColor="@android:color/transparent" android:strokeAlpha="0.07"/>
+  <!-- Center glow -->
+  <path android:pathData="M54,54 m-38,0 a38,38 0 1,0 76,0 a38,38 0 1,0 -76,0"
+    android:fillColor="#00F5FF" android:fillAlpha="0.025"/>
+  <!-- Corner accent dots -->
+  <path android:pathData="M9,9 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0
+    M99,9 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0
+    M9,99 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0
+    M99,99 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0"
+    android:fillColor="#00F5FF" android:fillAlpha="0.18"/>
+</vector>

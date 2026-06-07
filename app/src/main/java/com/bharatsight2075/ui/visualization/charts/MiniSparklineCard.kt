@@ -14,6 +14,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bharatsight2075.ui.theme.SciFiTheme
+import com.bharatsight2075.ui.visualization.ChartMockData
+import com.bharatsight2075.ui.visualization.ChartType
 import com.bharatsight2075.ui.visualization.GradientFills
 
 /**
@@ -23,11 +25,11 @@ import com.bharatsight2075.ui.visualization.GradientFills
 fun MiniSparklineCard(
     label: String,
     value: String,
-    data: List<Float>,
+    data: List<Float> = emptyList(),
     modifier: Modifier = Modifier,
     animated: Boolean = true
 ) {
-    val safeData = data.takeIf { it.isNotEmpty() } ?: listOf(0.4f, 0.6f, 0.5f, 0.8f, 0.7f, 0.9f)
+    val safeData = data.takeIf { it.isNotEmpty() } ?: ChartMockData.generateMockFor(ChartType.LINE).filterIsInstance<Float>()
     
     var triggered by remember { mutableStateOf(false) }
     val progress by animateFloatAsState(
@@ -70,14 +72,6 @@ fun MiniSparklineCard(
             }
             
             drawPath(path, colors.primary, style = Stroke(2.dp.toPx(), cap = StrokeCap.Round))
-            
-            val fillPath = Path().apply {
-                addPath(path)
-                lineTo(size.width, size.height)
-                lineTo(0f, size.height)
-                close()
-            }
-            drawPath(fillPath, GradientFills.areaFill(colors.primary, size.height))
         }
     }
 }

@@ -3,37 +3,35 @@ package com.bharatsight2075.ui.visualization.charts
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.*
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.drawscope.*
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.bharatsight2075.ui.theme.SciFiTheme
+import com.bharatsight2075.ui.visualization.ChartMockData
+import com.bharatsight2075.ui.visualization.ChartType
 
-data class TimelineEvent(val year: String, val label: String)
+data class TimelineEvent(val title: String, val year: String, val value: Float = 0f)
 
 /**
  * C23. TimelineEventChart
  */
 @Composable
 fun TimelineEventChart(
-    events: List<TimelineEvent>,
     modifier: Modifier = Modifier,
+    events: List<TimelineEvent> = emptyList(),
+    data: List<Float> = emptyList(), // Compatibility
     chartHeight: androidx.compose.ui.unit.Dp = 140.dp,
-    animated: Boolean = true
+    animated: Boolean = true,
+    primaryColor: Color = SciFiTheme.extendedColors.primary // Added primaryColor
 ) {
-    val safeEvents = events.takeIf { it.isNotEmpty() } ?: listOf(
-        TimelineEvent("2030", "Solar Grid"),
-        TimelineEvent("2045", "Hyperloop"),
-        TimelineEvent("2060", "AI Gov"),
-        TimelineEvent("2075", "GDP $37T")
-    )
+    @Suppress("UNCHECKED_CAST")
+    val safeEvents = events.takeIf { it.isNotEmpty() } 
+        ?: data.mapIndexed { i, v -> TimelineEvent("Event ${i+1}", "${2025+i}", v) }.takeIf { it.isNotEmpty() }
+        ?: (ChartMockData.generateMockData(ChartType.TIMELINE) as List<TimelineEvent>)
 
     var triggered by remember { mutableStateOf(false) }
     val progress by animateFloatAsState(
@@ -44,7 +42,6 @@ fun TimelineEventChart(
     LaunchedEffect(Unit) { triggered = true }
     
     val currentProgress = if (animated) progress else 1f
-    val primary = SciFiTheme.extendedColors.primary
     val density = LocalDensity.current
 
     BoxWithConstraints(modifier = modifier.fillMaxWidth().height(chartHeight)) {
@@ -53,48 +50,24 @@ fun TimelineEventChart(
         
         Canvas(Modifier.fillMaxSize()) {
             // Main Line
-            drawLine(primary.copy(0.4f), Offset(0f, lineYPx), Offset(wPx * currentProgress, lineYPx), 2.dp.toPx())
+            drawLine(
+                color = primaryColor.copy(alpha = 0.3f),
+                start = Offset(0f, lineYPx),
+                end = Offset(wPx * currentProgress, lineYPx),
+                strokeWidth = 2.dp.toPx()
+            )
             
-            safeEvents.forEachIndexed { i, _ ->
-                val x = (i.toFloat() / (safeEvents.size - 1).coerceAtLeast(1)) * wPx * currentProgress
-                // Dot
-                drawCircle(primary.copy(0.2f), 14.dp.toPx(), Offset(x, lineYPx))
-                drawCircle(primary, 6.dp.toPx(), Offset(x, lineYPx))
+            safeEvents.forEachIndexed { i, event ->
+                val x = (i + 0.5f) / safeEvents.size * wPx
+                if (x > wPx * currentProgress) return@forEachIndexed
                 
-                // Tick line
-                val dir = if (i % 2 == 0) -1 else 1
-                drawLine(primary.copy(0.6f), Offset(x, lineYPx), Offset(x, lineYPx + dir * 40.dp.toPx()), 1.dp.toPx())
-            }
-        }
-        
-        safeEvents.forEachIndexed { i, event ->
-            val xFraction = i.toFloat() / (safeEvents.size - 1).coerceAtLeast(1)
-            val xDp = (xFraction * maxWidth.value).dp
-            val topOffset = if (i % 2 == 0) 4.dp else (maxHeight / 2 + 44.dp)
-            
-            Box(
-                Modifier
-                    .offset(x = xDp * currentProgress - 36.dp, y = topOffset)
-                    .width(72.dp)
-                    .graphicsLayer { alpha = currentProgress },
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = event.year,
-                        fontSize = 9.sp,
-                        fontFamily = FontFamily.Monospace,
-                        color = primary,
-                        textAlign = TextAlign.Center
-                    )
-                    Text(
-                        text = event.label,
-                        fontSize = 8.sp,
-                        color = Color.White.copy(alpha = 0.7f),
-                        textAlign = TextAlign.Center,
-                        maxLines = 2
-                    )
-                }
+                // Event point
+                drawCircle(primaryColor, 6.dp.toPx(), Offset(x, lineYPx))
+                drawCircle(Color.White, 2.dp.toPx(), Offset(x, lineYPx))
+                
+                // Connecting line to text (simulated)
+                val h = if (i % 2 == 0) -30.dp.toPx() else 30.dp.toPx()
+                drawLine(primaryColor.copy(alpha = 0.5f), Offset(x, lineYPx), Offset(x, lineYPx + h), strokeWidth = 1.dp.toPx())
             }
         }
     }

@@ -10,86 +10,48 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
-import com.bharatsight2075.data.repositories.EconomicRepository
 import com.bharatsight2075.ui.components.*
-import com.bharatsight2075.ui.theme.GradPalette
 import com.bharatsight2075.ui.visualization.MockData
+import com.bharatsight2075.ui.visualization.SectionDefaultData
+import com.bharatsight2075.ui.visualization.ChartMockData
+import com.bharatsight2075.ui.visualization.ChartType
 import com.bharatsight2075.ui.visualization.charts.*
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class DigitalEconomyViewModel @Inject constructor(repo: EconomicRepository) : ViewModel() {
-    data class DigitalData(val heroStats: List<Pair<String, String>> = emptyList())
-    private val _data = MutableStateFlow(DigitalData())
-    val sectionData = _data.asStateFlow()
-    init { viewModelScope.launch(Dispatchers.IO) {
-        _data.value = DigitalData(heroStats = MockData.digitalHeroStats)
-    }}
+class DigitalEconomyViewModel @Inject constructor() : ViewModel() {
+    private val _data = MutableStateFlow(SectionDefaultData(MockData.generateHeroStats("digital_economy")))
+    val data: StateFlow<SectionDefaultData> = _data.asStateFlow()
 }
 
 @Composable
-fun DigitalEconomyScreen(navController: NavController) {
-    val vm: DigitalEconomyViewModel = hiltViewModel()
-    val data by vm.sectionData.collectAsStateWithLifecycle()
-    val primaryColor = Color(0xFF00F5FF)
-
+fun DigitalEconomyScreen(
+    navController: NavController,
+    viewModel: DigitalEconomyViewModel = hiltViewModel()
+) {
+    val uiState by viewModel.data.collectAsStateWithLifecycle()
     Scaffold(
-        topBar = {
-            BharatSightTopBar(
-                mode = TopBarMode.Section(
-                    title = "Digital & Fintech",
-                    badge = "UPI ₹",
-                    badgeColor = primaryColor,
-                    onBackClick = { navController.popBackStack() }
-                )
-            )
-        },
+        topBar = { BharatSightTopBar(TopBarMode.Section(title="Digital Economy",
+            badge=null, onBackClick={ navController.popBackStack() })) },
         containerColor = Color(0xFF080810)
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            item { HeroStatsRow(chartId = "digital_hero", navController, stats = data.heroStats) }
-
-            item {
-                DashCard(chartId = "digital_upi_wave", navController, "Real-time UPI Volume") {
-                    WaveformChart(brush = Brush.verticalGradient(listOf(primaryColor, Color.Transparent)))
-                }
-            }
-
-            item {
-                TwoColumnRow {
-                    DashCard(chartId = "digital_consumption_liquid", navController, "Data Consumption", modifier = Modifier.weight(1f)) {
-                        LiquidFillGauge(percent = 0.92f, primaryColor = primaryColor)
-                    }
-                    DashCard(chartId = "digital_security_radar", navController, "Cybersecurity Radar", modifier = Modifier.weight(1f)) {
-                        RadarPolygonChart(data = emptyList(), labels = emptyList())
-                    }
-                }
-            }
-
-            item {
-                DashCard(chartId = "digital_locker_spiral", navController, "India Stack Adoption") {
-                    SpiralTimelineChart(events = emptyList(), primaryColor = primaryColor)
-                }
-            }
-
-            item {
-                DashCard(chartId = "digital_cbdc_orbital", navController, "Digital Rupee Use Cases") {
-                    OrbitalDonutSystem(rings = emptyList())
-                }
-            }
-
-            item { Spacer(modifier = Modifier.height(100.dp)) }
+        LazyColumn(Modifier.padding(padding), contentPadding=PaddingValues(12.dp),
+            verticalArrangement=Arrangement.spacedBy(12.dp)) {
+            item { HeroStatsRow(chartId="digital_hero", navController, uiState.heroStats) }
+            item { DashCard(chartId="upi_wave", navController, "UPI TRANSACTION VOLUME", description = "Real-time UPI transaction volume animated wave") {
+                GradientAreaChart(data=ChartMockData.forType(ChartType.AREA) as List<Float>,
+                    modifier=Modifier.fillMaxWidth().height(180.dp)) }}
+            item { TwoColumnRow {
+                DashCard(chartId="adoption_race", navController, "INTERNET PENETRATION", description = "Internet user growth by state animated bar race", modifier=Modifier.weight(1f)) {
+                    SpeedometerGauge(value=0.72f, max=1.0f, label="RATIO", modifier=Modifier.fillMaxWidth().height(180.dp)) }
+                DashCard(chartId="payment_sankey", navController, "E-COMMERCE GROWTH", description = "Cash → UPI → cards → BNPL → crypto flow", modifier=Modifier.weight(1f)) {
+                    RingProgressCluster(rings=ChartMockData.forType(ChartType.RING_CLUSTER) as List<RingData>, modifier=Modifier.fillMaxWidth().height(180.dp)) }
+            }}
         }
     }
 }

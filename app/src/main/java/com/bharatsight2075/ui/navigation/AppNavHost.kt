@@ -53,7 +53,7 @@ fun AppNavHost(
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
-            AdvancedTelemetryDrawer(
+            BharatSightSideDrawer(
                 selectedRoute = currentRoute ?: Routes.HOME,
                 onNavigate = { route ->
                     navController.navigate(route) {
@@ -61,7 +61,9 @@ fun AppNavHost(
                         restoreState = true
                     }
                     scope.launch { drawerState.close() }
-                }
+                },
+                drawerState = drawerState,
+                scope = scope
             )
         }
     ) {
@@ -103,23 +105,33 @@ fun AppNavHost(
                 }
             ) {
                 composable(Routes.SPLASH) {
-                    SplashScreen(onFinishSplash = {
-                        navController.navigate(Routes.HOME) {
+                    SplashScreen(onComplete = { isLoggedIn ->
+                        val dest = if (isLoggedIn) Routes.HOME else Routes.LOGIN
+                        navController.navigate(dest) {
                             popUpTo(Routes.SPLASH) { inclusive = true }
                         }
                     })
+                }
+
+                composable(Routes.LOGIN) {
+                    LoginScreen(navController)
+                }
+
+                composable(Routes.WELCOME) {
+                    WelcomeScreen(navController)
                 }
                 
                 // Bottom Nav Destinations
                 composable(Routes.HOME) {
                     HomeScreen(
+                        navController = navController,
                         onNavigate = { navController.navigate(it) },
                         onMenuClick = { scope.launch { drawerState.open() } },
                         onSettingsClick = { navController.navigate(Routes.SETTINGS) }
                     )
                 }
                 composable(Routes.COMPARE) {
-                    CompareScreen(onBack = { navController.popBackStack() })
+                    CompareScreen(navController = navController, onBack = { navController.popBackStack() })
                 }
                 composable(Routes.UPDATES) {
                     UpdatesScreen(navController = navController)
@@ -132,14 +144,14 @@ fun AppNavHost(
                 }
 
                 // Section Screens
-                composable(Routes.MACRO) {
+                composable(Routes.MACRO_OVERVIEW) {
                     MacroOverviewScreen(
                         navController = navController,
                         marketData = marketData,
                         onBack = { navController.popBackStack() }
                     )
                 }
-                composable(Routes.SECTOR) {
+                composable(Routes.SECTOR_DIVE) {
                     SectorDeepDiveScreen(navController = navController, onBack = { navController.popBackStack() })
                 }
                 composable(Routes.DEMOGRAPHICS) {
@@ -151,51 +163,56 @@ fun AppNavHost(
                 composable(Routes.SETTINGS) {
                     SettingsScreen(onBack = { navController.popBackStack() })
                 }
-                composable(Routes.GLOBE) {
-                    India3DGlobeScreen(navController = navController, onBack = { navController.popBackStack() })
+                composable(Routes.MAPS) {
+                    MapsScreen(navController = navController)
+                }
+                composable(Routes.INDIA_GLOBE) {
+                    India3DGlobeScreen(navController = navController)
                 }
                 composable(Routes.QUERY) {
                     QueryConsoleScreen(onBack = { navController.popBackStack() })
                 }
-                composable(Routes.OBSERVATORY) {
+                composable(Routes.MACRO_HUB) {
                     MacroIndicatorObservatory(navController = navController, onBack = { navController.popBackStack() })
                 }
-                composable(Routes.TRADE) {
+                composable(Routes.TRADE_NETWORK) {
                     TradeNetworkScreen(navController = navController, onBack = { navController.popBackStack() })
                 }
-                composable(Routes.MARKET) {
+                composable(Routes.STOCK_HEATMAP) {
                     SectorStockHeatmapScreen(navController = navController, onBack = { navController.popBackStack() })
+                }
+                composable(Routes.STATE_DIVE) {
+                    StateComparisonScreen(navController = navController, onBack = { navController.popBackStack() })
                 }
                 
                 // New Sector Routes
-                composable(Routes.AGRICULTURE) { AgricultureScreen(navController) }
-                composable(Routes.BANKING) { BankingScreen(navController) }
-                composable(Routes.ENERGY) { EnergyScreen(navController) }
-                composable(Routes.SMART_CITIES) { SmartCitiesScreen(navController) }
-                composable(Routes.STARTUP) { StartupScreen(navController) }
-                composable(Routes.DEFENCE) { DefenceScreen(navController) }
-                composable(Routes.CLIMATE) { ClimateScreen(navController) }
-                composable(Routes.DIGITAL_ECONOMY) { DigitalEconomyScreen(navController) }
-                composable(Routes.EDUCATION) { EducationScreen(navController) }
-                composable(Routes.HEALTHCARE) { HealthcareScreen(navController) }
-                composable(Routes.REAL_ESTATE) { RealEstateScreen(navController) }
-                composable(Routes.TOURISM) { TourismScreen(navController) }
-                composable(Routes.SPACE_TECH) { SpaceTechScreen(navController) }
-                composable(Routes.GEO_RISK) { GeoRiskScreen(navController) }
-                composable(Routes.INEQUALITY) { InequalityScreen(navController) }
-                composable(Routes.LABOUR) { LabourScreen(navController) }
-                composable(Routes.LOGISTICS) { LogisticsScreen(navController) }
-                composable(Routes.MEDIA) { MediaScreen(navController) }
-                composable(Routes.NATURAL_RESOURCES) { NaturalResourcesScreen(navController) }
-                composable(Routes.SOFT_POWER) { SoftPowerScreen(navController) }
+                composable(Routes.AGRICULTURE) { AgricultureScreen(navController = navController) }
+                composable(Routes.BANKING) { BankingScreen(navController = navController) }
+                composable(Routes.ENERGY) { EnergyScreen(navController = navController) }
+                composable(Routes.SMART_CITIES) { SmartCitiesScreen(navController = navController) }
+                composable(Routes.STARTUPS) { StartupScreen(navController = navController) }
+                composable(Routes.DEFENCE) { DefenceScreen(navController = navController) }
+                composable(Routes.CLIMATE) { ClimateScreen(navController = navController) }
+                composable(Routes.DIGITAL_ECONOMY) { DigitalEconomyScreen(navController = navController) }
+                composable(Routes.EDUCATION) { EducationScreen(navController = navController) }
+                composable(Routes.HEALTHCARE) { HealthcareScreen(navController = navController) }
+                composable(Routes.REAL_ESTATE) { RealEstateScreen(navController = navController) }
+                composable(Routes.TOURISM) { TourismScreen(navController = navController) }
+                composable(Routes.SPACE_TECH) { SpaceTechScreen(navController = navController) }
+                composable(Routes.GEO_RISK) { GeoRiskScreen(navController = navController) }
+                composable(Routes.INEQUALITY) { InequalityScreen(navController = navController) }
+                composable(Routes.LABOUR) { LabourScreen(navController = navController) }
+                composable(Routes.LOGISTICS) { LogisticsScreen(navController = navController) }
+                composable(Routes.MEDIA) { MediaScreen(navController = navController) }
+                composable(Routes.NATURAL_RESOURCES) { NaturalResourcesScreen(navController = navController) }
+                composable(Routes.SOFT_POWER) { SoftPowerScreen(navController = navController) }
 
                 // DRILL-DOWN DETAIL SYSTEM
                 composable(
                     route = Routes.CHART_DETAIL,
-                    arguments = listOf(navArgument("chartId") { type = NavType.StringType })
-                ) { backStackEntry ->
-                    val chartId = backStackEntry.arguments?.getString("chartId") ?: ""
-                    ChartDetailScreen(navController = navController, chartId = chartId)
+                    arguments = listOf(navArgument("chartId") { type = NavType.StringType; defaultValue = "" })
+                ) {
+                    ChartDetailScreen(navController = navController)
                 }
             }
         }

@@ -33,8 +33,14 @@ fun GlowingNumberTicker(
     var triggered by remember { mutableStateOf(false) }
     val progress by animateFloatAsState(
         targetValue = if (triggered) 1f else 0f,
-        animationSpec = tween(2000, easing = FastOutSlowInEasing),
-        label = "TickerAnim"
+        animationSpec = tween(durationMillis = 1500, easing = EaseOutCubic),
+        label = "chartProgress"
+    )
+    val glowPulse by rememberInfiniteTransition(label = "glow").animateFloat(
+        initialValue = 0.5f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(tween(2000, easing = EaseInOutSine), RepeatMode.Reverse),
+        label = "gp"
     )
     LaunchedEffect(Unit) { triggered = true }
     
@@ -50,7 +56,7 @@ fun GlowingNumberTicker(
                 val radius = (size.width / 2).coerceAtLeast(0.01f)
                 drawCircle(
                     brush = Brush.radialGradient(
-                        colors = listOf(primary.copy(alpha = 0.08f), Color.Transparent),
+                        colors = listOf(primary.copy(alpha = 0.12f * glowPulse), Color.Transparent),
                         center = center,
                         radius = radius
                     )

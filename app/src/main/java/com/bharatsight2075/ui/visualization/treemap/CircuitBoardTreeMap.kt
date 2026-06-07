@@ -1,18 +1,15 @@
 package com.bharatsight2075.ui.visualization.treemap
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.Fill
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.geometry.*
+import androidx.compose.ui.graphics.*
+import androidx.compose.ui.unit.dp
 import com.bharatsight2075.ui.theme.RetroDarkColors
+import com.bharatsight2075.ui.visualization.ChartMockData
+import com.bharatsight2075.ui.visualization.ChartType
 
 data class TreeMapNode(
     val label: String,
@@ -23,35 +20,35 @@ data class TreeMapNode(
 @Composable
 fun CircuitBoardTreeMap(
     modifier: Modifier = Modifier,
-    nodes: List<TreeMapNode>,
+    nodes: List<TreeMapNode> = emptyList(),
     gap: Float = 4f
 ) {
+    val safeNodes = nodes.takeIf { it.isNotEmpty() } ?: ChartMockData.generateMockFor(ChartType.BAR).map { TreeMapNode("M", it as Float) }
+    
     Canvas(
         modifier = modifier
             .fillMaxWidth()
-            .aspectRatio(16 / 9f)
+            .height(220.dp)
     ) {
-        val pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(10f, 5f))
-        
-        nodes.forEachIndexed { index, node ->
-            val rectWidth = (size.width / nodes.size) * 0.8f
-            val rectHeight = size.height * 0.6f
-            val topLeft = Offset(
-                x = (index * (size.width / nodes.size)) + (size.width / nodes.size - rectWidth) / 2,
-                y = (size.height - rectHeight) / 2
+        val count = safeNodes.size
+        val w = size.width / count
+        val totalVal = safeNodes.sumOf { it.value.toDouble() }.toFloat()
+
+        safeNodes.forEachIndexed { i, node ->
+            val rectWidth = w - 8.dp.toPx()
+            val rectHeight = (node.value / totalVal.coerceAtLeast(1f)) * size.height * count
+            
+            drawRect(
+                color = node.color.copy(alpha = 0.4f),
+                topLeft = Offset(i * w + 4.dp.toPx(), (size.height - rectHeight) / 2),
+                size = Size(rectWidth, rectHeight)
             )
             
-            val rectPath = Path().apply {
-                addRect(androidx.compose.ui.geometry.Rect(topLeft, Size(rectWidth, rectHeight)))
-            }
-            
-            drawPath(
-                path = rectPath,
+            drawRect(
                 color = node.color,
-                style = Stroke(
-                    width = 2f,
-                    pathEffect = pathEffect
-                )
+                topLeft = Offset(i * w + 4.dp.toPx(), (size.height - rectHeight) / 2),
+                size = Size(rectWidth, rectHeight),
+                style = androidx.compose.ui.graphics.drawscope.Stroke(1.dp.toPx())
             )
         }
     }

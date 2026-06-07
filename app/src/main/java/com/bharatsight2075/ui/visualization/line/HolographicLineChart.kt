@@ -1,100 +1,54 @@
 package com.bharatsight2075.ui.visualization.line
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.Fill
-import androidx.compose.ui.graphics.drawscope.Stroke
-import com.bharatsight2075.ui.theme.RetroDarkColors
-
-data class DataPoint(val x: Float, val y: Float)
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.geometry.*
+import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.drawscope.*
+import androidx.compose.ui.unit.dp
+import com.bharatsight2075.ui.visualization.ChartMockData
+import com.bharatsight2075.ui.visualization.ChartType
 
 @Composable
 fun HolographicLineChart(
     modifier: Modifier = Modifier,
-    dataPoints: List<DataPoint>,
-    lineColor: Color = RetroDarkColors.NeonOrange,
-    glowColor: Color? = null
+    points: List<Float> = emptyList(),
+    chartHeight: androidx.compose.ui.unit.Dp = 200.dp,
+    primaryColor: Color = Color(0xFF00F5FF)
 ) {
-    val glow = glowColor ?: lineColor
-    
-    Canvas(
-        modifier = modifier
-            .fillMaxWidth()
-            .aspectRatio(16 / 9f)
-            .clipToBounds()
-    ) {
-        val path = Path().apply {
-            if (dataPoints.isNotEmpty()) {
-                moveTo(dataPoints[0].x, dataPoints[0].y)
-                for (i in 1 until dataPoints.size) {
-                    cubicTo(
-                        dataPoints[i - 1].x, dataPoints[i - 1].y,
-                        (dataPoints[i - 1].x + dataPoints[i].x) / 2,
-                        (dataPoints[i - 1].y + dataPoints[i].y) / 2,
-                        dataPoints[i].x, dataPoints[i].y
-                    )
-                }
-                lineTo(dataPoints.last().x, size.height)
-                lineTo(dataPoints.first().x, size.height)
-                close()
+    val safeData = points.takeIf { it.isNotEmpty() } ?: ChartMockData.generateMockFor(ChartType.LINE)
+    val maxVal = safeData.maxOrNull()?.coerceAtLeast(0.001f) ?: 1f
+
+    var triggered by remember { mutableStateOf(false) }
+    val progress by animateFloatAsState(
+        targetValue = if (triggered) 1f else 0f,
+        animationSpec = tween(2000, easing = EaseOutQuart),
+        label = "HoloLineAnim"
+    )
+    LaunchedEffect(Unit) { triggered = true }
+
+    Canvas(modifier = modifier.fillMaxWidth().height(chartHeight).drawWithCache {
+        val b = Brush.verticalGradient(listOf(primaryColor.copy(alpha = 0.5f), Color.Transparent))
+        onDrawBehind {
+            val path = Path()
+            val count = safeData.size
+            
+            safeData.forEachIndexed { index, value ->
+                val x = index.toFloat() / (count - 1).coerceAtLeast(1) * size.width
+                val y = size.height - (value / maxVal * size.height * progress)
+                
+                if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
+                
+                // Vertical glow lines
+                drawLine(primaryColor.copy(alpha = 0.1f * progress), Offset(x, y), Offset(x, size.height), strokeWidth = 1.dp.toPx())
             }
+            
+            drawPath(path, primaryColor, style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round))
+            drawPath(path, b, style = Stroke(width = 10.dp.toPx(), cap = StrokeCap.Round), alpha = 0.3f)
         }
-        
-        drawPath(
-            path = path,
-            brush = Brush.verticalGradient(
-                colors = listOf(
-                    glow.copy(alpha = 0.4f),
-                    Color.Transparent
-                )
-            ),
-            style = Fill
-        )
-        
-        drawPath(
-            path = Path().apply {
-                if (dataPoints.isNotEmpty()) {
-                    moveTo(dataPoints[0].x, dataPoints[0].y)
-                    for (i in 1 until dataPoints.size) {
-                        cubicTo(
-                            dataPoints[i - 1].x, dataPoints[i - 1].y,
-                            (dataPoints[i - 1].x + dataPoints[i].x) / 2,
-                            (dataPoints[i - 1].y + dataPoints[i].y) / 2,
-                            dataPoints[i].x, dataPoints[i].y
-                        )
-                    }
-                }
-            },
-            color = glow,
-            style = Stroke(
-                width = 3f,
-                pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 4f))
-            )
-        )
-        
-        for (point in dataPoints) {
-            val offset = Offset(point.x, point.y)
-            drawCircle(
-                color = lineColor,
-                radius = 6f,
-                center = offset,
-                style = Fill
-            )
-            drawCircle(
-                color = glow.copy(alpha = 0.6f),
-                radius = 12f,
-                center = offset,
-                style = Stroke(width = 1f)
-            )
-        }
-    }
+    }) { }
 }

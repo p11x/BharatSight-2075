@@ -11,13 +11,34 @@ import androidx.navigation.NavController
 import com.bharatsight2075.ui.components.*
 import com.bharatsight2075.ui.theme.GradPalette
 import com.bharatsight2075.ui.theme.SciFiTheme
+import com.bharatsight2075.ui.visualization.MockData
+import com.bharatsight2075.ui.visualization.SectionDefaultData
 import com.bharatsight2075.ui.visualization.charts.*
+
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.bharatsight2075.ui.maps.NeonIndiaMap
+import com.bharatsight2075.viewmodel.IndiaMapViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import javax.inject.Inject
+
+@HiltViewModel
+class IndiaGlobeViewModel @Inject constructor() : ViewModel() {
+    private val _data = MutableStateFlow(SectionDefaultData(MockData.generateHeroStats("india_globe")))
+    val data: StateFlow<SectionDefaultData> = _data.asStateFlow()
+}
 
 @Composable
 fun India3DGlobeScreen(
     navController: NavController,
-    onBack: () -> Unit
+    viewModel: IndiaGlobeViewModel = hiltViewModel(),
+    onBack: () -> Unit = { navController.popBackStack() }
 ) {
+    val uiState by viewModel.data.collectAsStateWithLifecycle()
     val extendedColors = SciFiTheme.extendedColors
     
     Scaffold(
@@ -41,14 +62,24 @@ fun India3DGlobeScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item {
+                HeroStatsRow(
+                    chartId = "globe_hero",
+                    navController = navController,
+                    stats = uiState.heroStats
+                )
+            }
+            item {
                 DashCard(
                     chartId = "globe_map",
                     navController = navController,
                     title = "INTERACTIVE STATE TOPOGRAPHY"
                 ) {
-                    IndiaMapCanvas(
+                    val mapVm: IndiaMapViewModel = hiltViewModel()
+                    NeonIndiaMap(
+                        viewModel = mapVm,
                         modifier = Modifier.height(400.dp),
-                        onStateDrillDown = { /* Navigate */ }
+                        onStateClick = { /* Navigate */ },
+                        showCities = true
                     )
                 }
             }

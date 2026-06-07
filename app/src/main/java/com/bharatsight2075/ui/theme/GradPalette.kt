@@ -10,7 +10,7 @@ object GradPalette {
     val YELLOW_ORANGE = Brush.linearGradient(listOf(Color(0xFFFFD600), Color(0xFFFF6B35)))
     val PURPLE_BLUE = Brush.linearGradient(listOf(Color(0xFF7C4DFF), Color(0xFF2979FF)))
     val PINK_PURPLE = Brush.linearGradient(listOf(Color(0xFFF06292), Color(0xFF7C4DFF)))
-    val GOLD_WHITE = Brush.linearGradient(listOf(Color(0xFFFFD700), Color(0xFFFFFFFF)))
+    val GOLD_WHITE = Brush.linearGradient(listOf(Color(0xFFFFD700), Color(0xFFFFFFFF).copy(alpha = 0.85f)))
     val CYAN_WHITE = Brush.linearGradient(listOf(Color(0xFF00F5FF), Color(0xFFFFFFFF).copy(alpha = 0.8f)))
     
     /**

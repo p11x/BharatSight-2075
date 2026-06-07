@@ -29,6 +29,14 @@ fun ParticleFlowCanvas(
     chartHeight: androidx.compose.ui.unit.Dp = 240.dp,
     particleCount: Int = 40
 ) {
+    var triggered by remember { mutableStateOf(false) }
+    val progress by animateFloatAsState(
+        targetValue = if (triggered) 1f else 0f,
+        animationSpec = tween(durationMillis = 2000, easing = EaseOutCubic),
+        label = "chartProgress"
+    )
+    LaunchedEffect(Unit) { triggered = true }
+
     val infiniteTransition = rememberInfiniteTransition(label = "Particles")
     val time by infiniteTransition.animateFloat(
         initialValue = 0f,
@@ -62,8 +70,8 @@ fun ParticleFlowCanvas(
             val x = (1-t)*(1-t)*(p.start.x / 1000f * size.width) + 2*(1-t)*t*(p.control.x / 1000f * size.width) + t*t*(p.end.x / 1000f * size.width)
             val y = (1-t)*(1-t)*(p.start.y * size.height) + 2*(1-t)*t*(p.control.y * size.height) + t*t*(p.end.y * size.height)
             
-            drawCircle(p.color, 3.dp.toPx() * (1-t), Offset(x, y), alpha = (1-t) * 0.8f)
-            drawCircle(p.color.copy(alpha = 0.2f), 8.dp.toPx() * (1-t), Offset(x, y))
+            drawCircle(p.color, 3.dp.toPx() * (1-t) * progress, Offset(x, y), alpha = (1-t) * 0.8f * progress)
+            drawCircle(p.color.copy(alpha = 0.2f * progress), 8.dp.toPx() * (1-t) * progress, Offset(x, y))
         }
     }
 }

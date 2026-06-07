@@ -1,6 +1,29 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">BharatSight 2075</string>
-    <string name="app_name_debug">BharatSight 2075 Debug</string>
-    <string name="title_prediction_engine">Prediction Engine</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_compare">Compare</string>
+    <string name="nav_updates">Updates</string>
+    <string name="nav_ask">Ask</string>
+    <string name="nav_profile">Profile</string>
+
+    <!-- Auth & Welcome -->
+    <string name="auth_required">IDENTITY VERIFICATION REQUIRED</string>
+    <string name="auth_scanning">SCANNING BIOMETRIC HASH...</string>
+    <string name="auth_decrypting">DECRYPTING NEURAL KEY...</string>
+    <string name="auth_granted">ACCESS GRANTED</string>
+    <string name="hold_to_scan">HOLD TO SCAN</string>
+    <string name="authenticating">AUTHENTICATING...</string>
+
+    <!-- Titles -->
+    <string name="title_macro_overview">Macro Overview</string>
+    <string name="title_forecaster">Economic Forecaster</string>
+    <string name="title_map">India Economic Map</string>
+    <string name="title_observatory">Macro Indicator Hub</string>
+
+    <!-- Common Buttons -->
+    <string name="btn_next">NEXT</string>
+    <string name="btn_initialize">INITIALIZE</string>
+    <string name="btn_back">Back</string>
 </resources>

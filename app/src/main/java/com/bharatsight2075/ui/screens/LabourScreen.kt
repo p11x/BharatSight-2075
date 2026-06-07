@@ -10,84 +10,48 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
-import com.bharatsight2075.data.repositories.EconomicRepository
 import com.bharatsight2075.ui.components.*
+import com.bharatsight2075.ui.visualization.MockData
+import com.bharatsight2075.ui.visualization.SectionDefaultData
+import com.bharatsight2075.ui.visualization.ChartMockData
+import com.bharatsight2075.ui.visualization.ChartType
 import com.bharatsight2075.ui.visualization.charts.*
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class LabourViewModel @Inject constructor(repo: EconomicRepository) : ViewModel() {
-    data class LabourData(val heroStats: List<Pair<String, String>> = emptyList())
-    private val _data = MutableStateFlow(LabourData())
-    val sectionData = _data.asStateFlow()
-    init { viewModelScope.launch(Dispatchers.IO) {
-        _data.value = LabourData(heroStats = listOf("LFP Rate" to "42.6%", "Formal" to "21%", "Wage Growth" to "7.2%"))
-    }}
+class LabourViewModel @Inject constructor() : ViewModel() {
+    private val _data = MutableStateFlow(SectionDefaultData(MockData.generateHeroStats("labour")))
+    val data: StateFlow<SectionDefaultData> = _data.asStateFlow()
 }
 
 @Composable
-fun LabourScreen(navController: NavController) {
-    val vm: LabourViewModel = hiltViewModel()
-    val data by vm.sectionData.collectAsStateWithLifecycle()
-    val primaryColor = Color(0xFF80CBC4)
-
+fun LabourScreen(
+    navController: NavController,
+    viewModel: LabourViewModel = hiltViewModel()
+) {
+    val uiState by viewModel.data.collectAsStateWithLifecycle()
     Scaffold(
-        topBar = {
-            BharatSightTopBar(
-                mode = TopBarMode.Section(
-                    title = "Labour Market",
-                    badge = "CMIE",
-                    badgeColor = primaryColor,
-                    onBackClick = { navController.popBackStack() }
-                )
-            )
-        },
+        topBar = { BharatSightTopBar(TopBarMode.Section(title="Labour & Employment",
+            badge=null, onBackClick={ navController.popBackStack() })) },
         containerColor = Color(0xFF080810)
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            item { HeroStatsRow(chartId = "labour_hero", navController, stats = data.heroStats) }
-
-            item {
-                DashCard(chartId = "labour_sector_race", navController, "Employment by Sector (Race)") {
-                    GradientBarChart(data = emptyList(), labels = emptyList())
-                }
-            }
-
-            item {
-                TwoColumnRow {
-                    DashCard(chartId = "labour_remote_liquid", navController, "Remote Work Index", modifier = Modifier.weight(1f)) {
-                        LiquidFillGauge(percent = 0.35f, primaryColor = primaryColor)
-                    }
-                    DashCard(chartId = "labour_quality_radar", navController, "Job Quality Index", modifier = Modifier.weight(1f)) {
-                        RadarPolygonChart(data = emptyList(), labels = emptyList())
-                    }
-                }
-            }
-
-            item {
-                DashCard(chartId = "labour_youth_unemployment_spiral", navController, "Youth Unemployment Trend") {
-                    SpiralTimelineChart(events = emptyList(), primaryColor = primaryColor)
-                }
-            }
-
-            item {
-                DashCard(chartId = "labour_gender_mirror", navController, "Gender LFP Divide") {
-                    MirrorBarChart(data = emptyList())
-                }
-            }
-
-            item { Spacer(modifier = Modifier.height(100.dp)) }
+        LazyColumn(Modifier.padding(padding), contentPadding=PaddingValues(12.dp),
+            verticalArrangement=Arrangement.spacedBy(12.dp)) {
+            item { HeroStatsRow(chartId="labour_hero", navController, uiState.heroStats) }
+            item { DashCard(chartId="employment_pulse", navController, "LFPR TRAJECTORY", description = "Employment rate by sector pulse radar") {
+                GradientAreaChart(data=ChartMockData.forType(ChartType.AREA) as List<Float>,
+                    modifier=Modifier.fillMaxWidth().height(180.dp)) }}
+            item { TwoColumnRow {
+                DashCard(chartId="sector_race", navController, "UNEMPLOYMENT", description = "Sector-wise job creation animated bar race", modifier=Modifier.weight(1f)) {
+                    SpeedometerGauge(value=0.72f, max=1.0f, label="RATE", modifier=Modifier.fillMaxWidth().height(180.dp)) }
+                DashCard(chartId="gig_bubble", navController, "FORMALIZATION", description = "Gig economy platforms by worker count bubble", modifier=Modifier.weight(1f)) {
+                    RingProgressCluster(rings=ChartMockData.forType(ChartType.RING_CLUSTER) as List<RingData>, modifier=Modifier.fillMaxWidth().height(180.dp)) }
+            }}
         }
     }
 }

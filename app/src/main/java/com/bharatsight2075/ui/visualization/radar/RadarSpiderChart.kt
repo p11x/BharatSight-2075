@@ -1,129 +1,90 @@
 package com.bharatsight2075.ui.visualization.radar
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.Fill
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.text.drawText
-import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.geometry.*
+import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.drawscope.*
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.bharatsight2075.ui.theme.RetroDarkColors
-import kotlin.math.cos
-import kotlin.math.sin
+import com.bharatsight2075.ui.visualization.ChartMockData
+import com.bharatsight2075.ui.visualization.ChartType
+import kotlin.math.*
 
 data class RadarDataSet(
-    val values: List<Float>,
-    val maxValues: List<Float>,
     val label: String,
+    val values: List<Float>,
+    val maxValues: List<Float> = emptyList(),
     val color: Color
 )
 
 @Composable
 fun RadarSpiderChart(
     modifier: Modifier = Modifier,
-    dataSets: List<RadarDataSet>,
-    labels: List<String>
+    data: List<Float> = emptyList(),
+    labels: List<String> = emptyList(),
+    dataSets: List<RadarDataSet> = emptyList(),
+    chartHeight: androidx.compose.ui.unit.Dp = 200.dp,
+    primaryColor: Color = Color(0xFF00F5FF)
 ) {
-    val textMeasurer = rememberTextMeasurer()
-    Canvas(
-        modifier = modifier
-            .fillMaxWidth()
-            .aspectRatio(1f)
-    ) {
-        val center = Offset(size.width / 2, size.height / 2)
-        val maxRadius = size.minDimension / 2 * 0.7f
-        val sides = labels.size
+    val axisCount = if (labels.isNotEmpty()) labels.size else if (dataSets.isNotEmpty()) dataSets.first().values.size else 5
+    
+    var triggered by remember { mutableStateOf(false) }
+    val progress by animateFloatAsState(
+        targetValue = if (triggered) 1f else 0f,
+        animationSpec = tween(1200, easing = EaseOutBack),
+        label = "SpiderAnim"
+    )
+    LaunchedEffect(Unit) { triggered = true }
+
+    Canvas(modifier = modifier.fillMaxWidth().height(chartHeight)) {
+        val radius = size.minDimension / 2 * 0.8f
         
-        val gridPath = Path().apply {
-            repeat(5) { level ->
-                val radius = maxRadius * ((level + 1) / 5f)
-                val startAngle = -90f
-                for (i in 0 until sides) {
-                    val angle = startAngle + (i * 360f / sides)
-                    val x = center.x + radius * cos(Math.toRadians(angle.toDouble())).toFloat()
-                    val y = center.y + radius * sin(Math.toRadians(angle.toDouble())).toFloat()
-                    if (i == 0) moveTo(x, y) else lineTo(x, y)
-                }
-                close()
-            }
+        // Circular web
+        repeat(5) { rIdx ->
+            val r = radius * (rIdx + 1) / 5
+            drawCircle(primaryColor.copy(alpha = 0.1f), r, center, style = Stroke(1.dp.toPx()))
         }
         
-        drawPath(
-            path = gridPath,
-            color = RetroDarkColors.TextDisabled.copy(alpha = 0.3f),
-            style = Stroke(
-                width = 1f,
-                pathEffect = PathEffect.dashPathEffect(floatArrayOf(4f, 4f))
-            )
-        )
-        
-        // Draw Axis Lines & Labels
-        for (i in 0 until sides) {
-            val angle = -90f + (i * 360f / sides)
-            val x = center.x + maxRadius * cos(Math.toRadians(angle.toDouble())).toFloat()
-            val y = center.y + maxRadius * sin(Math.toRadians(angle.toDouble())).toFloat()
-            drawLine(
-                color = RetroDarkColors.TextDisabled.copy(alpha = 0.2f),
-                start = center,
-                end = Offset(x, y),
-                strokeWidth = 1f
-            )
-            
-            // Draw Text Label
-            val labelRadius = maxRadius + 20.dp.toPx()
-            val tx = center.x + labelRadius * cos(Math.toRadians(angle.toDouble())).toFloat()
-            val ty = center.y + labelRadius * sin(Math.toRadians(angle.toDouble())).toFloat()
-            
-            val textLayoutResult = textMeasurer.measure(
-                text = labels[i],
-                style = TextStyle(color = RetroDarkColors.TextSecondary, fontSize = 10.sp)
-            )
-            drawText(
-                textLayoutResult = textLayoutResult,
-                topLeft = Offset(tx - textLayoutResult.size.width / 2, ty - textLayoutResult.size.height / 2)
-            )
+        // Spider Axes
+        for (i in 0 until axisCount) {
+            val angle = -PI / 2 + i * (2 * PI / axisCount)
+            val x = center.x + radius * cos(angle).toFloat()
+            val y = center.y + radius * sin(angle).toFloat()
+            drawLine(primaryColor.copy(alpha = 0.2f), center, Offset(x, y), strokeWidth = 1.dp.toPx())
         }
         
-        dataSets.forEach { dataSet ->
-            val polygonPath = Path().apply {
-                dataSet.values.forEachIndexed { index, value ->
-                    val angle = -90f + (index * 360f / sides)
-                    val radius = maxRadius * (value / dataSet.maxValues.getOrElse(index) { 1f })
-                    val x = center.x + radius * cos(Math.toRadians(angle.toDouble())).toFloat()
-                    val y = center.y + radius * sin(Math.toRadians(angle.toDouble())).toFloat()
-                    if (index == 0) moveTo(x, y) else lineTo(x, y)
+        // DataSets
+        if (dataSets.isNotEmpty()) {
+            dataSets.forEach { set ->
+                val path = Path()
+                set.values.forEachIndexed { i, value ->
+                    val maxVal = set.maxValues.getOrNull(i) ?: 1f
+                    val r = radius * (value / maxVal) * progress
+                    val angle = -PI / 2 + i * (2 * PI / axisCount)
+                    val x = center.x + r * cos(angle).toFloat()
+                    val y = center.y + r * sin(angle).toFloat()
+                    if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
                 }
-                close()
+                path.close()
+                drawPath(path, set.color.copy(alpha = 0.3f))
+                drawPath(path, set.color, style = Stroke(width = 2.dp.toPx()))
             }
-            
-            drawPath(
-                path = polygonPath,
-                color = dataSet.color,
-                style = Stroke(width = 2.dp.toPx())
-            )
-            
-            drawPath(
-                path = polygonPath,
-                brush = Brush.radialGradient(
-                    colors = listOf(
-                        dataSet.color.copy(alpha = 0.4f),
-                        Color.Transparent
-                    ),
-                    center = center,
-                    radius = maxRadius
-                ),
-                style = Fill
-            )
+        } else {
+            val safeData = data.takeIf { it.isNotEmpty() } ?: ChartMockData.generateMockFor(ChartType.RADAR)
+            val path = Path()
+            safeData.take(axisCount).forEachIndexed { i, value ->
+                val r = radius * value * progress
+                val angle = -PI / 2 + i * (2 * PI / axisCount)
+                val x = center.x + r * cos(angle).toFloat()
+                val y = center.y + r * sin(angle).toFloat()
+                if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+            }
+            path.close()
+            drawPath(path, primaryColor.copy(alpha = 0.3f))
+            drawPath(path, primaryColor, style = Stroke(width = 2.dp.toPx()))
         }
     }
 }

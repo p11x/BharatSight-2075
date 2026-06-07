@@ -8,16 +8,35 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bharatsight2075.ui.components.*
 import com.bharatsight2075.ui.theme.GradPalette
 import com.bharatsight2075.ui.theme.SciFiTheme
+import com.bharatsight2075.ui.visualization.MockData
+import com.bharatsight2075.ui.visualization.SectionDefaultData
 import com.bharatsight2075.ui.visualization.charts.*
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import javax.inject.Inject
+
+@HiltViewModel
+class DemographicsViewModel @Inject constructor() : ViewModel() {
+    private val _data = MutableStateFlow(SectionDefaultData(MockData.generateHeroStats("demographics")))
+    val data: StateFlow<SectionDefaultData> = _data.asStateFlow()
+}
 
 @Composable
 fun DemographicsScreen(
     navController: NavController,
+    viewModel: DemographicsViewModel = hiltViewModel(),
     onBack: () -> Unit
 ) {
+    val uiState by viewModel.data.collectAsStateWithLifecycle()
+    
     Scaffold(
         topBar = {
             BharatSightTopBar(
@@ -38,6 +57,13 @@ fun DemographicsScreen(
             contentPadding = PaddingValues(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            item {
+                HeroStatsRow(
+                    chartId = "demo_hero",
+                    navController = navController,
+                    stats = uiState.heroStats
+                )
+            }
             item {
                 DashCard(
                     chartId = "demo_population_pyramid",

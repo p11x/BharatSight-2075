@@ -5,87 +5,113 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.*
 import androidx.compose.ui.graphics.*
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.*
+import androidx.compose.ui.text.*
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.bharatsight2075.ui.theme.SciFiTheme
 import com.bharatsight2075.ui.visualization.ChartMockData
 import com.bharatsight2075.ui.visualization.ChartType
-import kotlin.math.PI
-import kotlin.math.cos
-import kotlin.math.sin
+import kotlin.math.*
 
-/**
- * C09. RadarPolygonChart
- * FIXED: Angle offset and centering.
- */
+data class RadarDataSet(val label: String, val values: List<Float>, val color: Color)
+
 @Composable
 fun RadarPolygonChart(
-    data: List<Float>,
-    labels: List<String>,
     modifier: Modifier = Modifier,
+    data: List<Float> = emptyList(),
+    values: List<Float> = emptyList(),
+    labels: List<String> = emptyList(),
+    dataSets: List<RadarDataSet> = emptyList(),
     chartHeight: androidx.compose.ui.unit.Dp = 200.dp,
-    animated: Boolean = true
+    primaryColor: Color = SciFiTheme.extendedColors.primary
 ) {
-    val safeData = data.takeIf { it.isNotEmpty() } 
-        ?: remember { ChartMockData.generateMockData(ChartType.RADAR).filterIsInstance<Float>() }
+    val safeData = values.takeIf { it.isNotEmpty() } ?: data.takeIf { it.isNotEmpty() } ?: ChartMockData.generateMockFor(ChartType.RADAR)
+    val axisCount = if (labels.isNotEmpty()) labels.size else safeData.size
     
     var triggered by remember { mutableStateOf(false) }
     val progress by animateFloatAsState(
         targetValue = if (triggered) 1f else 0f,
-        animationSpec = tween(1200, easing = EaseOutCubic),
-        label = "RadarAnim"
+        animationSpec = tween(durationMillis = 1200, easing = EaseOutCubic),
+        label = "chartProgress"
+    )
+    val glowPulse by rememberInfiniteTransition(label = "glow").animateFloat(
+        initialValue = 0.5f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(tween(2000, easing = EaseInOutSine), RepeatMode.Reverse),
+        label = "gp"
     )
     LaunchedEffect(Unit) { triggered = true }
-    
-    val currentProgress = if (animated) progress else 1f
-    val colors = SciFiTheme.extendedColors
-    val primary = colors.primary
+
+    val textMeasurer = rememberTextMeasurer()
+    val labelStyle = TextStyle(
+        color = Color.White.copy(0.4f),
+        fontSize = 7.sp,
+        fontFamily = FontFamily.Monospace
+    )
 
     Canvas(modifier = modifier.fillMaxWidth().height(chartHeight)) {
-        val radius = size.minDimension / 2 * 0.7f // Leave room for labels
-        val angleStep = 2 * PI / safeData.size
-        val maxVal = safeData.maxOrNull()?.coerceAtLeast(0.001f) ?: 1f
-        val radarCenter = center
-
-        // Draw Axes & Web
-        for (step in 1..4) {
-            val r = radius * (step / 4f)
-            drawCircle(colors.textDisabled.copy(alpha = 0.05f), r, radarCenter, style = Stroke(1.dp.toPx()))
-        }
-
-        safeData.indices.forEach { i ->
-            val angle = -PI / 2 + i * angleStep
-            val end = Offset(
-                radarCenter.x + (radius * cos(angle)).toFloat(),
-                radarCenter.y + (radius * sin(angle)).toFloat()
-            )
-            drawLine(colors.textDisabled.copy(alpha = 0.2f), radarCenter, end, 1.dp.toPx())
-        }
-
-        // Polygon
-        val points = safeData.mapIndexed { i, v ->
-            val angle = -PI / 2 + i * angleStep
-            val r = (v / maxVal) * radius * currentProgress
-            Offset(
-                radarCenter.x + (r * cos(angle)).toFloat(),
-                radarCenter.y + (r * sin(angle)).toFloat()
-            )
-        }
-
-        if (points.size >= 3) {
-            val path = Path().apply {
-                moveTo(points[0].x, points[0].y)
-                points.forEach { lineTo(it.x, it.y) }
-                close()
+        val radius = size.minDimension / 2 * 0.7f
+        
+        // Background Web Rings (20%, 40%, 60%, 80%, 100%)
+        repeat(5) { rIdx ->
+            val r = radius * (rIdx + 1) / 5
+            val path = Path()
+            for (i in 0 until axisCount) {
+                val angle = -PI / 2 + i * (2 * PI / axisCount)
+                val x = center.x + r * cos(angle).toFloat()
+                val y = center.y + r * sin(angle).toFloat()
+                if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
             }
-            
-            drawPath(path, primary, alpha = 0.3f)
-            drawPath(path, primary, style = Stroke(2.dp.toPx(), join = StrokeJoin.Round))
-            
-            // Glow
-            drawPath(path, primary.copy(alpha = 0.2f), style = Stroke(6.dp.toPx(), join = StrokeJoin.Round))
+            path.close()
+            drawPath(path, Color.White.copy(alpha = 0.05f), style = Stroke(1.dp.toPx()))
         }
+        
+        // Axes and Labels
+        for (i in 0 until axisCount) {
+            val angle = -PI / 2 + i * (2 * PI / axisCount)
+            val x = center.x + radius * cos(angle).toFloat()
+            val y = center.y + radius * sin(angle).toFloat()
+            drawLine(primaryColor.copy(alpha = 0.15f), center, Offset(x, y), strokeWidth = 1.dp.toPx())
+            
+            // Axis Label at vertex tip
+            val labelText = labels.getOrNull(i) ?: "AXIS ${i+1}"
+            val result = textMeasurer.measure(labelText, labelStyle)
+            val labelR = radius + 12.dp.toPx()
+            val lx = center.x + labelR * cos(angle).toFloat() - result.size.width / 2
+            val ly = center.y + labelR * sin(angle).toFloat() - result.size.height / 2
+            drawText(result, topLeft = Offset(lx, ly))
+        }
+        
+        // Data Polygon
+        val dataPath = Path()
+        safeData.take(axisCount).forEachIndexed { i, value ->
+            val r = radius * value * progress
+            val angle = -PI / 2 + i * (2 * PI / axisCount)
+            val x = center.x + r * cos(angle).toFloat()
+            val y = center.y + r * sin(angle).toFloat()
+            if (i == 0) dataPath.moveTo(x, y) else dataPath.lineTo(x, y)
+            
+            drawCircle(primaryColor, 3.dp.toPx() * progress, Offset(x, y))
+        }
+        dataPath.close()
+        
+        // Fill
+        drawPath(dataPath, primaryColor.copy(alpha = 0.15f))
+        
+        // Border and Glow
+        drawPath(
+            path = dataPath,
+            color = primaryColor.copy(alpha = 0.2f * glowPulse),
+            style = Stroke(width = 2.dp.toPx() * 3.5f)
+        )
+        drawPath(
+            path = dataPath,
+            color = primaryColor.copy(alpha = 0.8f),
+            style = Stroke(width = 1.5.dp.toPx())
+        )
     }
 }

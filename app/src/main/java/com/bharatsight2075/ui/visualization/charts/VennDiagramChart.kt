@@ -5,10 +5,9 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.*
 import androidx.compose.ui.graphics.*
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.drawscope.*
 import androidx.compose.ui.unit.dp
 import com.bharatsight2075.ui.theme.SciFiTheme
 
@@ -19,14 +18,21 @@ import com.bharatsight2075.ui.theme.SciFiTheme
 @Composable
 fun VennDiagramChart(
     modifier: Modifier = Modifier,
-    chartHeight: androidx.compose.ui.unit.Dp = 180.dp,
-    animated: Boolean = true
+    chartHeight: androidx.compose.ui.unit.Dp = 280.dp,
+    animated: Boolean = true,
+    primaryColor: Color = SciFiTheme.extendedColors.primary // Added primaryColor
 ) {
     var triggered by remember { mutableStateOf(false) }
     val progress by animateFloatAsState(
         targetValue = if (triggered) 1f else 0f,
-        animationSpec = tween(1200, easing = EaseOutCubic),
-        label = "VennAnim"
+        animationSpec = tween(durationMillis = 1200, easing = EaseOutCubic),
+        label = "chartProgress"
+    )
+    val glowPulse by rememberInfiniteTransition(label = "glow").animateFloat(
+        initialValue = 0.5f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(tween(2000, easing = EaseInOutSine), RepeatMode.Reverse),
+        label = "gp"
     )
     LaunchedEffect(Unit) { triggered = true }
     
@@ -44,15 +50,18 @@ fun VennDiagramChart(
         val center2 = Offset(center.x - distance * 0.866f, vCenter + distance * 0.5f)
         val center3 = Offset(center.x + distance * 0.866f, vCenter + distance * 0.5f)
         
-        drawIntoCanvas { canvas ->
-            val layerBounds = Rect(Offset.Zero, size)
-            canvas.saveLayer(layerBounds, Paint())
-            
-            drawCircle(colors.primary.copy(alpha = 0.5f), radius, center1, blendMode = BlendMode.SrcOver)
-            drawCircle(colors.accent.copy(alpha = 0.5f), radius, center2, blendMode = BlendMode.Screen)
-            drawCircle(Color(0xFF39FF14).copy(alpha = 0.5f), radius, center3, blendMode = BlendMode.Screen)
-            
-            canvas.restore()
-        }
+        drawCircle(primaryColor.copy(alpha = 0.3f * currentProgress), radius, center1, style = Fill)
+        drawCircle(Color(0xFFFF6B35).copy(alpha = 0.3f * currentProgress), radius, center2, style = Fill)
+        drawCircle(Color(0xFF7C4DFF).copy(alpha = 0.3f * currentProgress), radius, center3, style = Fill)
+        
+        // Double-pass glow
+        drawCircle(primaryColor.copy(alpha = 0.2f * glowPulse * currentProgress), radius, center1, style = Stroke(4.dp.toPx()))
+        drawCircle(primaryColor.copy(alpha = 0.9f * currentProgress), radius, center1, style = Stroke(1.dp.toPx()))
+        
+        drawCircle(Color(0xFFFF6B35).copy(alpha = 0.2f * glowPulse * currentProgress), radius, center2, style = Stroke(4.dp.toPx()))
+        drawCircle(Color(0xFFFF6B35).copy(alpha = 0.9f * currentProgress), radius, center2, style = Stroke(1.dp.toPx()))
+        
+        drawCircle(Color(0xFF7C4DFF).copy(alpha = 0.2f * glowPulse * currentProgress), radius, center3, style = Stroke(4.dp.toPx()))
+        drawCircle(Color(0xFF7C4DFF).copy(alpha = 0.9f * currentProgress), radius, center3, style = Stroke(1.dp.toPx()))
     }
 }

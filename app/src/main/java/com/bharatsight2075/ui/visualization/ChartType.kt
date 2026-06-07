@@ -1,28 +1,8 @@
 package com.bharatsight2075.ui.visualization
 
-import androidx.compose.runtime.Stable
-
-@Stable
-sealed class VisualizationData {
-    @Stable
-    data class TimeSeries(val points: List<Point>) : VisualizationData()
-    @Stable
-    data class Composition(val segments: List<Segment>) : VisualizationData()
-}
-
-@Stable
-data class Point(val x: Float, val y: Float, val value: Float = 0f)
-
-@Stable
-data class Segment(
-    val label: String, 
-    val value: Float, 
-    val maxValue: Float = 100f, 
-    val color: androidx.compose.ui.graphics.Color? = null
-)
-
 enum class ChartType {
     AREA,
+    LINE,
     MULTI_LINE,
     BAR,
     DONUT,
@@ -39,6 +19,7 @@ enum class ChartType {
     TREEMAP,
     WATERFALL,
     TIMELINE,
+    SCATTER,
     SCATTER_TREND,
     PROGRESS_HORIZONTAL,
     RING_CLUSTER,
@@ -65,5 +46,14 @@ enum class ChartType {
     GRAVITY_SCATTER,
     SANKEY_RIVER,
     TERRACE_FILL,
-    FLOW_MATRIX
+    FLOW_MATRIX,
+    
+    // Short names for detail factory matching
+    GAUGE,
+    HALF_DONUT,
+    RING,
+    WAVE,
+    POLAR,
+    LIQUID,
+    STACKED
 }

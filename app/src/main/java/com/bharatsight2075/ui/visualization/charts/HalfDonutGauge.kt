@@ -7,111 +7,139 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.geometry.*
 import androidx.compose.ui.graphics.*
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.*
+import androidx.compose.ui.text.*
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bharatsight2075.ui.theme.SciFiTheme
-import com.bharatsight2075.ui.visualization.GradientFills
-import kotlin.math.cos
-import kotlin.math.sin
+import java.util.Locale
 
-/**
- * C04. HalfDonutGauge
- */
 @Composable
 fun HalfDonutGauge(
-    value: Float,
-    max: Float,
-    label: String,
     modifier: Modifier = Modifier,
-    chartHeight: androidx.compose.ui.unit.Dp = 140.dp,
-    animated: Boolean = true
+    percent: Float = 0f,
+    value: Float = 0f,
+    max: Float = 1f,
+    label: String = "PERCENT",
+    unit: String = "INDEX",
+    target: Float? = 85f,
+    chartHeight: androidx.compose.ui.unit.Dp = 180.dp,
+    primaryColor: Color = SciFiTheme.extendedColors.primary
 ) {
+    val displayValue = if (value != 0f) value else percent * max
+    val safeMax = max.coerceAtLeast(0.001f)
+    
     var triggered by remember { mutableStateOf(false) }
     val progress by animateFloatAsState(
-        targetValue = if (triggered) (value / max).coerceIn(0f, 1f) else 0f,
-        animationSpec = tween(1200, easing = EaseOutCubic),
-        label = "GaugeAnim"
+        targetValue = if (triggered) 1f else 0f,
+        animationSpec = tween(durationMillis = 1200, easing = EaseOutCubic),
+        label = "chartProgress"
+    )
+    val glowPulse by rememberInfiniteTransition(label = "glow").animateFloat(
+        initialValue = 0.5f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(tween(2000, easing = EaseInOutSine), RepeatMode.Reverse),
+        label = "gp"
     )
     LaunchedEffect(Unit) { triggered = true }
-    
-    val currentProgress = if (animated) progress else (value / max)
-    val colors = SciFiTheme.extendedColors
-    val primary = colors.primary
+
+    val fillPercent = (displayValue / safeMax).coerceIn(0f, 1f)
 
     Box(modifier = modifier.fillMaxWidth().height(chartHeight), contentAlignment = Alignment.BottomCenter) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val strokeWidth = 16.dp.toPx()
-            val diameter = size.width - 32.dp.toPx()
-            val arcSize = Size(diameter, diameter)
-            val topLeft = Offset((size.width - diameter) / 2, size.height - diameter / 2)
-            
-            // Track Background
-            drawArc(
-                color = colors.textDisabled.copy(alpha = 0.1f),
-                startAngle = 180f,
-                sweepAngle = 180f,
-                useCenter = false,
-                topLeft = topLeft,
-                size = arcSize,
-                style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
-            )
-            
-            val arcBrush = Brush.sweepGradient(listOf(primary.copy(0.4f), primary))
+        Canvas(modifier = Modifier.fillMaxSize().drawWithCache {
+            val b = Brush.horizontalGradient(listOf(primaryColor.copy(alpha = 0.4f), primaryColor))
+            onDrawBehind {
+                val radius = size.minDimension * 0.9f
+                val strokeWidth = 24.dp.toPx()
+                val arcSize = Size(radius, radius)
+                val topLeft = Offset(center.x - radius / 2, size.height - radius / 2 - 16.dp.toPx())
+                
+                // Background arc
+                drawArc(
+                    color = Color.White.copy(alpha = 0.05f),
+                    startAngle = 180f,
+                    sweepAngle = 180f,
+                    useCenter = false,
+                    topLeft = topLeft,
+                    size = arcSize,
+                    style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                )
+                
+                // Active arc with Gradient
+                clipRect(bottom = size.height) {
+                    drawArc(
+                        brush = b,
+                        startAngle = 180f,
+                        sweepAngle = 180f * fillPercent * progress,
+                        useCenter = false,
+                        topLeft = topLeft,
+                        size = arcSize,
+                        style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                    )
+                }
+                
+                // Double-pass glow
+                drawArc(
+                    color = primaryColor.copy(alpha = 0.2f * glowPulse * progress),
+                    startAngle = 180f,
+                    sweepAngle = 180f * fillPercent * progress,
+                    useCenter = false,
+                    topLeft = topLeft,
+                    size = arcSize,
+                    style = Stroke(width = strokeWidth + 4.dp.toPx(), cap = StrokeCap.Round)
+                )
 
-            // Progress Arc Glow
-            drawArc(
-                brush = arcBrush,
-                startAngle = 180f,
-                sweepAngle = 180f * currentProgress,
-                useCenter = false,
-                topLeft = topLeft,
-                size = arcSize,
-                style = Stroke(width = strokeWidth + 6.dp.toPx(), cap = StrokeCap.Round),
-                alpha = 0.2f
-            )
-            
-            // Progress Arc Sharp
-            drawArc(
-                brush = arcBrush,
-                startAngle = 180f,
-                sweepAngle = 180f * currentProgress,
-                useCenter = false,
-                topLeft = topLeft,
-                size = arcSize,
-                style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
-            )
-            
-            // Needle
-            val angle = 180f + (180f * currentProgress)
-            val angleRad = Math.toRadians(angle.toDouble())
-            val needleLen = diameter / 2 - 8.dp.toPx()
-            val pivot = Offset(center.x, size.height)
-            val needleEnd = Offset(
-                pivot.x + needleLen * cos(angleRad).toFloat(),
-                pivot.y + needleLen * sin(angleRad).toFloat()
-            )
-            
-            drawLine(Color.White, pivot, needleEnd, 2.dp.toPx(), cap = StrokeCap.Round)
-            drawCircle(Color.White, 4.dp.toPx(), pivot)
-        }
+                // Target Reference Line
+                target?.let { t ->
+                    val tPercent = (t / safeMax).coerceIn(0f, 1f)
+                    val tAngle = Math.toRadians((180f + 180f * tPercent).toDouble())
+                    val innerR = radius / 2 - strokeWidth / 2 - 4.dp.toPx()
+                    val outerR = radius / 2 + strokeWidth / 2 + 4.dp.toPx()
+                    
+                    val p1 = Offset(
+                        center.x + innerR * kotlin.math.cos(tAngle).toFloat(),
+                        (topLeft.y + radius/2) + innerR * kotlin.math.sin(tAngle).toFloat()
+                    )
+                    val p2 = Offset(
+                        center.x + outerR * kotlin.math.cos(tAngle).toFloat(),
+                        (topLeft.y + radius/2) + outerR * kotlin.math.sin(tAngle).toFloat()
+                    )
+                    drawLine(Color.White.copy(0.6f), p1, p2, 2.dp.toPx())
+                }
+                
+                // End Marker
+                val currentAngle = Math.toRadians((180f + 180f * fillPercent * progress).toDouble())
+                val markerPos = Offset(
+                    center.x + (radius/2) * kotlin.math.cos(currentAngle).toFloat(),
+                    (topLeft.y + radius/2) + (radius/2) * kotlin.math.sin(currentAngle).toFloat()
+                )
+                drawCircle(Color.White, 6.dp.toPx() * progress, markerPos)
+                drawCircle(primaryColor, 3.dp.toPx() * progress, markerPos)
+            }
+        }) { }
         
         Column(
-            modifier = Modifier.padding(bottom = 12.dp),
+            modifier = Modifier.padding(bottom = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = value.toString(),
-                style = SciFiTheme.typography.BodyMono.copy(fontSize = 18.sp),
-                color = colors.textPrimary
+                text = String.format(Locale.getDefault(), "%.1f", displayValue),
+                style = SciFiTheme.typography.HeroNumber.copy(fontSize = 32.sp, fontWeight = FontWeight.Bold),
+                color = Color.White
             )
             Text(
+                text = unit.uppercase(),
+                style = SciFiTheme.typography.ChartCaption.copy(fontSize = 10.sp),
+                color = primaryColor.copy(alpha = 0.8f)
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
                 text = label,
-                style = SciFiTheme.typography.ChartCaption,
-                color = colors.textSecondary
+                style = SciFiTheme.typography.BodyMono.copy(fontSize = 9.sp, color = Color.White.copy(0.4f))
             )
         }
     }

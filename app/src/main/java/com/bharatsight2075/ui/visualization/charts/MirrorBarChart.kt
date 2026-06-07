@@ -12,6 +12,9 @@ import androidx.compose.ui.graphics.*
 import androidx.compose.ui.unit.dp
 import com.bharatsight2075.ui.theme.SciFiTheme
 
+import com.bharatsight2075.ui.visualization.ChartMockData
+import com.bharatsight2075.ui.visualization.ChartType
+
 data class MirrorData(val left: Float, val right: Float, val label: String)
 
 /**
@@ -21,16 +24,22 @@ data class MirrorData(val left: Float, val right: Float, val label: String)
 fun MirrorBarChart(
     data: List<MirrorData>,
     modifier: Modifier = Modifier,
-    chartHeight: androidx.compose.ui.unit.Dp = 200.dp,
+    chartHeight: androidx.compose.ui.unit.Dp = 160.dp,
     animated: Boolean = true
 ) {
-    val safeData = data.takeIf { it.isNotEmpty() } ?: listOf(MirrorData(40f, 60f, "A"), MirrorData(70f, 30f, "B"), MirrorData(50f, 50f, "C"))
+    val rawData = data.takeIf { it.isNotEmpty() } ?: ChartMockData.generateMockFor(ChartType.BAR).chunked(2).map { MirrorData(it[0] as Float, it[1] as Float, "M") }
     
     var triggered by remember { mutableStateOf(false) }
     val progress by animateFloatAsState(
         targetValue = if (triggered) 1f else 0f,
-        animationSpec = tween(1200, easing = EaseOutCubic),
-        label = "MirrorAnim"
+        animationSpec = tween(durationMillis = 1200, easing = EaseOutCubic),
+        label = "chartProgress"
+    )
+    val glowPulse by rememberInfiniteTransition(label = "glow").animateFloat(
+        initialValue = 0.5f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(tween(2000, easing = EaseInOutSine), RepeatMode.Reverse),
+        label = "gp"
     )
     LaunchedEffect(Unit) { triggered = true }
     
@@ -38,13 +47,13 @@ fun MirrorBarChart(
     val colors = SciFiTheme.extendedColors
 
     Canvas(modifier = modifier.fillMaxWidth().height(chartHeight)) {
-        val count = safeData.size
-        val barHeight = (size.height / (count * 1.5f))
+        val count = rawData.size.coerceAtLeast(1)
+        val barHeight = (size.height / (count * 1.5f)).coerceAtLeast(4f)
         val gap = (size.height - (barHeight * count)) / (count + 1)
-        val maxVal = safeData.maxOf { maxOf(it.left, it.right) }.coerceAtLeast(0.001f)
+        val maxVal = rawData.maxOf { maxOf(it.left, it.right) }.coerceAtLeast(0.001f)
         val centerX = size.width / 2
 
-        safeData.forEachIndexed { i, d ->
+        rawData.forEachIndexed { i, d ->
             val y = gap + i * (barHeight + gap)
             
             // Left
@@ -55,6 +64,14 @@ fun MirrorBarChart(
                 size = Size(wLeft, barHeight),
                 cornerRadius = CornerRadius(2.dp.toPx())
             )
+            // Left Glow
+            drawRoundRect(
+                color = colors.primary.copy(alpha = 0.2f * glowPulse),
+                topLeft = Offset(centerX - wLeft, y),
+                size = Size(wLeft, barHeight),
+                cornerRadius = CornerRadius(2.dp.toPx()),
+                style = androidx.compose.ui.graphics.drawscope.Stroke(1.dp.toPx() * 3.5f)
+            )
             
             // Right
             val wRight = (d.right / maxVal) * (size.width / 2 - 20.dp.toPx()) * currentProgress
@@ -63,6 +80,14 @@ fun MirrorBarChart(
                 topLeft = Offset(centerX, y),
                 size = Size(wRight, barHeight),
                 cornerRadius = CornerRadius(2.dp.toPx())
+            )
+            // Right Glow
+            drawRoundRect(
+                color = colors.accent.copy(alpha = 0.2f * glowPulse),
+                topLeft = Offset(centerX, y),
+                size = Size(wRight, barHeight),
+                cornerRadius = CornerRadius(2.dp.toPx()),
+                style = androidx.compose.ui.graphics.drawscope.Stroke(1.dp.toPx() * 3.5f)
             )
         }
         

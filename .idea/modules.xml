@@ -2,19 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/BharatSight2075.iml" filepath="$PROJECT_DIR$/.idea/modules/BharatSight2075.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/BharatSight2075.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/BharatSight2075.app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/BharatSight2075.app.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/BharatSight2075.app.androidTest.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/BharatSight2075.app.main.iml" filepath="$PROJECT_DIR$/.idea/modules/app/BharatSight2075.app.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/BharatSight2075.app.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/BharatSight2075.app.unitTest.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/prediction-engine/BharatSight2075.prediction_engine.iml" filepath="$PROJECT_DIR$/.idea/modules/prediction-engine/BharatSight2075.prediction_engine.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/prediction-engine/BharatSight2075.prediction_engine.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/prediction-engine/BharatSight2075.prediction_engine.androidTest.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/prediction-engine/BharatSight2075.prediction_engine.main.iml" filepath="$PROJECT_DIR$/.idea/modules/prediction-engine/BharatSight2075.prediction_engine.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/prediction-engine/BharatSight2075.prediction_engine.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/prediction-engine/BharatSight2075.prediction_engine.unitTest.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/visualizations/BharatSight2075.visualizations.iml" filepath="$PROJECT_DIR$/.idea/modules/visualizations/BharatSight2075.visualizations.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/visualizations/BharatSight2075.visualizations.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/visualizations/BharatSight2075.visualizations.androidTest.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/visualizations/BharatSight2075.visualizations.main.iml" filepath="$PROJECT_DIR$/.idea/modules/visualizations/BharatSight2075.visualizations.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/visualizations/BharatSight2075.visualizations.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/visualizations/BharatSight2075.visualizations.unitTest.iml" />
     </modules>
   </component>
 </project>
